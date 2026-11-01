@@ -14,7 +14,9 @@ No sos asesor financiero: no recomiendes comprar/vender salvo que Ivo lo pida.
 Fuentes principales (config en `fuentes.json`): Cocos (Parte 3), IBKR, Citi (2 brokerage + 1 checking),
 HSBC US, HSBC MX (fondos, MXN). Hay otras minoritarias que Ivo no lista: no inventar, decir "no incluidas".
 1. **IBKR**: conector (`get_account_summary`, `get_account_positions`, `get_account_balances`), solo lectura.
-2. **Citi / HSBC US / HSBC MX**: estados de cuenta PDF en carpetas de Drive (ids en `fuentes.json`);
+2. **Citi / HSBC US / HSBC MX** (ids en `fuentes.json`; listar con `search_files` y query `parentId = '<id>'`;
+   los PDFs bajan con `download_file_content` en base64 -> decodificar a archivo y correr `scripts/parse_netx.py`;
+   nombre `<cuenta>_<DDMMAAAA>.pdf`; HSBC MX es un Google Sheet, columna H en MXN, leer con Sheets `get_values`): estados de cuenta PDF en carpetas de Drive (ids en `fuentes.json`);
    tomar el más reciente de cada cuenta, leerlo con el conector de Drive, extraer posiciones, cash y
    fecha de corte. Si no hay carpeta/archivo, decirlo y usar el último dato conocido marcándolo.
 3. Normalizar todo a un JSON y correr `scripts/consolidar.py` (FX: USD/MXN y ARS MEP del día, EUR→USD; la fuente
@@ -25,7 +27,13 @@ HSBC US, HSBC MX (fondos, MXN). Hay otras minoritarias que Ivo no lista: no inve
 5. **Antigüedad**: si un estado de cuenta tiene > 10 días, marcarlo arriba. Si no se pudo leer una fuente,
    el total es parcial y hay que decirlo en el titular. Los datos de cuentas son sensibles: ni números de
    cuenta ni CUIT/SSN en el email; no commitear estados de cuenta al repo.
-6. Fondos HSBC MX: valor en MXN, rendimiento de la semana si el estado lo trae, y convertir a USD; no
+6. **Riesgo país / concentración**: exposición por país económico (no por moneda de cotización: los bonos AR en USD
+   cotizan en ARS pero son riesgo USD-soberano AR). Reportar Argentina soberano + corporativo (p.ej. PAM) como % del bruto y
+   del NETO; EE.UU., Brasil/LatAm, México, Europa, EM, global. **Apalancamiento global** = bruto/neto con todas las
+   fuentes (hoy la única deuda es la caución de Cocos). Las notas BNP de Citi (cuenta 2245: MS, SOXX, GS) tienen precio de
+   mercado en el estado: usarlo como valuación y compararlo con el payoff del skill. Las notas BBVA en Cocos pueden
+   tener precio desactualizado (marca `***`): avisarlo. "Otros minoritarios" ~USD 15.000: se informan aparte, sin detalle.
+7. Fondos HSBC MX: valor en MXN, rendimiento de la semana si el estado lo trae, y convertir a USD; no
    asumir TIR ni composición si no están en el estado.
 
 ## Prioridad y control de calidad (leer primero)
