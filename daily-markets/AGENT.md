@@ -1,12 +1,36 @@
-# Agente diario: notas estructuradas + curva soberana AR
+# Agente semanal: patrimonio consolidado, notas estructuradas, curva soberana AR
 
-Corre lun-vie ~8:30 ART (pre-apertura). Todo en español rioplatense, directo. Un solo email HTML a
-ivo.airasca.porta@gmail.com con asunto `Reporte diario DD/MM – Notas y curva AR`.
+Corre **una vez por semana, viernes por la tarde** (después del cierre de NYSE y BYMA; sugerido
+viernes 16:30 hora Ciudad de México = 19:30 ART). Es una revisión para decidir, no un parte diario:
+priorizá **cambios de la semana** (viernes a viernes) sobre fotos del día. Español rioplatense, directo.
+Un solo email HTML a ivo.airasca.porta@gmail.com con asunto `Reporte semanal DD/MM – Patrimonio, notas y curva AR`.
+Semanal significa: variación 5 ruedas (OHLCV 1D, últimas 6 barras) de subyacentes y bonos; evolución del
+riesgo país (`sparklineData`) y de la TIR; carry devengado en la semana; P&L semanal por fuente;
+qué observaciones/pagos/vencimientos caen en los próximos 14 días; y al final **"Puntos a decidir"**:
+umbrales o eventos que se acercan (no recomendaciones de compra/venta salvo que Ivo las pida).
 No sos asesor financiero: no recomiendes comprar/vender salvo que Ivo lo pida.
 
+## Parte 0 – Patrimonio consolidado (todas las fuentes)
+Fuentes principales (config en `fuentes.json`): Cocos (Parte 3), IBKR, Citi (2 brokerage + 1 checking),
+HSBC US, HSBC MX (fondos, MXN). Hay otras minoritarias que Ivo no lista: no inventar, decir "no incluidas".
+1. **IBKR**: conector (`get_account_summary`, `get_account_positions`, `get_account_balances`), solo lectura.
+2. **Citi / HSBC US / HSBC MX**: estados de cuenta PDF en carpetas de Drive (ids en `fuentes.json`);
+   tomar el más reciente de cada cuenta, leerlo con el conector de Drive, extraer posiciones, cash y
+   fecha de corte. Si no hay carpeta/archivo, decirlo y usar el último dato conocido marcándolo.
+3. Normalizar todo a un JSON y correr `scripts/consolidar.py` (FX: USD/MXN y ARS MEP del día, EUR→USD; la fuente
+   de FX se cita). Cocos va con su `pasivos` (caución) para el neto real.
+4. Reportar: patrimonio bruto/pasivos/neto en USD, % por fuente, clase y moneda, top 10, **exposición por
+   subyacente** (MELI y NU aparecen en IBKR + notas BBVA/Citi + Cocos: sumarlas con `expo`), moneda
+   (ARS/MXN/EUR/USD) y riesgo país/soberano AR sobre el neto.
+5. **Antigüedad**: si un estado de cuenta tiene > 10 días, marcarlo arriba. Si no se pudo leer una fuente,
+   el total es parcial y hay que decirlo en el titular. Los datos de cuentas son sensibles: ni números de
+   cuenta ni CUIT/SSN en el email; no commitear estados de cuenta al repo.
+6. Fondos HSBC MX: valor en MXN, rendimiento de la semana si el estado lo trae, y convertir a USD; no
+   asumir TIR ni composición si no están en el estado.
+
 ## Prioridad y control de calidad (leer primero)
-- Orden de prioridad si falta tiempo/contexto: (1) notas + riesgos, (2) cartera Cocos + apalancamiento,
-  (3) curva, (4) proyección de volumen, (5) vol realizada. Mandá igual el email y declarar lo omitido.
+- Orden de prioridad si falta tiempo/contexto: (1) patrimonio consolidado + concentración, (2) notas + riesgos,
+  (3) cartera Cocos + apalancamiento, (4) curva, (5) proyección de volumen, (6) vol realizada. Mandá igual el email y declarar lo omitido.
   Para no quedarte corto: traé OHLCV con `summary=true` cuando solo necesites agregados, y armá un único
   JSON por script (volumen y cierres de todos los tickers) en vez de una corrida por ticker.
 - **Saneá datos de TradingView**: descartá precios ≤ 0, volúmenes absurdos (> 1e12) o series vacías

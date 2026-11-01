@@ -1,0 +1,36 @@
+{
+  "_nota": "Completar ids de carpetas de Drive. No guardar números de cuenta.",
+  "fuentes": {
+    "Cocos": {
+      "tipo": "pdf_drive",
+      "carpeta_id": "1orsb0zscqQiZasaRG5m1RXjjrPhwLTe0",
+      "moneda_base": "ARS",
+      "parser": "scripts/parse_cocos.py"
+    },
+    "IBKR": {
+      "tipo": "conector",
+      "moneda_base": "USD"
+    },
+    "Citi": {
+      "tipo": "pdf_drive",
+      "carpeta_id": null,
+      "cuentas": [
+        "brokerage 1",
+        "brokerage 2",
+        "checking"
+      ],
+      "moneda_base": "USD"
+    },
+    "HSBC US": {
+      "tipo": "pdf_drive",
+      "carpeta_id": null,
+      "moneda_base": "USD"
+    },
+    "HSBC MX": {
+      "tipo": "pdf_drive",
+      "carpeta_id": null,
+      "moneda_base": "MXN",
+      "nota": "mayormente fondos comunes"
+    }
+  }
+}
