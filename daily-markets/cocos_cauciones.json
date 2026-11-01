@@ -8,25 +8,11 @@
       "vencimiento": null,
       "renovacion_automatica": null,
       "garantia_requerida_pct": null,
-      "tasa_nota": "referencia aproximada; la tasa real es variable (1D, USD)",
+      "tasa_nota": "referencia manual de Ivo; el valor de mercado (IOL, USD 1D) se actualiza solo y ronda 0,5% el 30/10",
       "fuente_tasa": {
-        "pagina": "https://www.portfoliopersonal.com/Cotizaciones/Cauciones",
-        "api_pendiente_de_validar": {
-          "metodo": "POST",
-          "url": "https://api.portfoliopersonal.com/api/Cotify/obtener",
-          "body": {
-            "tipo": 190,
-            "plazo": [
-              1
-            ],
-            "moneda": [
-              22013
-            ],
-            "categoria": [],
-            "subCategoria": []
-          },
-          "notas": "tipo 190=Cauciones; moneda 22013=MEP (10000=ARS, 10001=CABLE); plazo 1=INMEDIATO. Campos de respuesta: nombreCorto, ultPrecio (TNA %), precioCompra, precioVenta, volumen, fechaCierre. Tomar la fila de 1 día (ej. 'DOLARES 1'). Requiere habilitar api.portfoliopersonal.com en la red del entorno; sin validar todavía."
-        }
+        "url": "https://iol.invertironline.com/mercado/cotizaciones/argentina/cauciones/todas",
+        "script": "daily-markets/scripts/caucion_usd.py",
+        "validada": "2026-11-01"
       }
     }
   ],
