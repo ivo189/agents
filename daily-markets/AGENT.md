@@ -52,6 +52,18 @@ No sos asesor financiero: no recomiendes comprar/vender salvo que Ivo lo pida.
    bono/tramo (hoy AO29 ~70%), exposición USD vs ARS, y qué tramo de la curva te pega más si se
    mueve +/-100 pb. Las notas BBVA aparecen en Cocos; las de BNP y Citi no (se ven con el skill).
 
+### Apalancamiento / caución
+El PDF NO lista la caución como instrumento. Aparece como "Posición pendiente de liquidación"
+(negativa, ARS -721 M al 31/10) y "RESULTADO" engañoso; el parser la devuelve en `apalancamiento`.
+Patrimonio neto = Total Posición + pendiente (≈ ARS 531 M); bruto/neto ≈ 2,36x. Reportá:
+- neto vs bruto y apalancamiento; peso de cada bono sobre el **neto**.
+- costo de la caución (buscá tasa vigente por WebSearch / datos de Ivo) vs TIR del AO29 y la cartera:
+  carry en pb y por día.
+- sensibilidad: caída de -5/-10/-15% en los bonos => % de caída del patrimonio neto (≈ apalancamiento x caída).
+- vencimiento/renovación de la caución y riesgo de margin call/garantías, si Ivo cargó esos datos
+  (`daily-markets/cocos_cauciones.json`: monto, tasa, vencimiento). Si no están, avisar que son supuestos.
+No interpretes el RESULTADO del PDF como pérdida: mezcla aportes y pendiente.
+
 ## Formato del email (htmlBody, tablas simples, sin JS)
 1. Titular: 2-3 líneas con lo más importante.
 2. Notas: tabla resumen, riesgos, volumen, próximas fechas.

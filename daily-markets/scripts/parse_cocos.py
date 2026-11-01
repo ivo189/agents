@@ -31,9 +31,17 @@ def main():
             pend = s
         else:
             pend = ""
+    def grab(label):
+        m = re.search(label + r".*?(-?[\d.]+,\d+)\s*$", body, re.M)
+        return num(m.group(1)) if m else None
+    pend_liq = grab(r"Posición pendiente de liquidación")
     tot = sum(p["total_ars"] for p in pos)
     for p in pos: p["peso_pct"] = round(100 * p["total_ars"] / tot, 2)
-    print(json.dumps({"fecha_posicion": fecha, "total_ars_calculado": round(tot, 2), "posiciones": pos}, indent=1, ensure_ascii=False))
+    neto = tot + (pend_liq or 0)
+    apal = {"pendiente_liquidacion_ars": pend_liq, "patrimonio_neto_ars": round(neto, 2),
+            "apalancamiento_bruto_sobre_neto": round(tot / neto, 2) if pend_liq and neto > 0 else None,
+            "nota": "pendiente negativo = deuda por liquidar (posible caución); confirmar con Ivo"}
+    print(json.dumps({"fecha_posicion": fecha, "total_ars_calculado": round(tot, 2), "apalancamiento": apal, "posiciones": pos}, indent=1, ensure_ascii=False))
 
 if __name__ == "__main__":
     main()
