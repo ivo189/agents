@@ -57,8 +57,10 @@ El PDF NO lista la caución como instrumento. Aparece como "Posición pendiente 
 (negativa, ARS -721 M al 31/10) y "RESULTADO" engañoso; el parser la devuelve en `apalancamiento`.
 Patrimonio neto = Total Posición + pendiente (≈ ARS 531 M); bruto/neto ≈ 2,36x. Reportá:
 - neto vs bruto y apalancamiento; peso de cada bono sobre el **neto**.
-- costo de la caución (buscá tasa vigente por WebSearch / datos de Ivo) vs TIR del AO29 y la cartera:
-  carry en pb y por día.
+- La caución de Ivo es **en USD** (tasa ~2% anual según Ivo; AO29 rinde ~8%): deuda USD = pendiente ARS /
+  MEP del PDF. No hay descalce de moneda con los bonos USD; el riesgo es precio, tasa de renovación y garantías.
+  Carry = (TIR cartera bonos - tasa caución USD) en pb, en USD/día y como % del patrimonio neto.
+  Tasa caución: la de `cocos_cauciones.json`; contrastar con la vigente (WebSearch) y avisar si difiere.
 - sensibilidad: caída de -5/-10/-15% en los bonos => % de caída del patrimonio neto (≈ apalancamiento x caída).
 - vencimiento/renovación de la caución y riesgo de margin call/garantías, si Ivo cargó esos datos
   (`daily-markets/cocos_cauciones.json`: monto, tasa, vencimiento). Si no están, avisar que son supuestos.

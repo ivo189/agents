@@ -1,0 +1,7 @@
+{
+  "_nota": "Datos informados por Ivo (no surgen del PDF). Completar null cuando los tenga.",
+  "cauciones": [
+    {"moneda": "USD", "monto_usd_aprox": 460000, "tasa_anual_pct": 2.0,
+     "vencimiento": null, "renovacion_automatica": null, "garantia_requerida_pct": null}
+  ]
+}
