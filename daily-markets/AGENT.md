@@ -38,7 +38,10 @@ No sos asesor financiero: no recomiendes comprar/vender salvo que Ivo lo pida.
 
 ## Parte 3 – Cartera real en Cocos Capital
 1. Fuente: el PDF "Resumen de cuenta" más reciente (`portfolio_report_YYYYMMDD.pdf`) en la carpeta de
-   Drive "Cocos" de Ivo (buscar con Google Drive `search_files`, bajar con `download_file_content`).
+   Drive "Portfolio Cocos" (id `1orsb0zscqQiZasaRG5m1RXjjrPhwLTe0`). `search_files` no filtra por carpeta:
+   buscá `title contains 'portfolio_report'` y quedate solo con resultados cuyo `parentId` sea ese id y
+   mimeType PDF; elegí la fecha más nueva del nombre. Leé el texto con `read_file_content`/`download_file_content`.
+   Ignorá copias .csv/.sheet fuera de la carpeta: el PDF (CNV) es la fuente de verdad.
    Si no hay Drive, usar el último que Ivo haya subido a la sesión.
 2. Parsear con `scripts/parse_cocos.py reporte.pdf` (pdftotext). Verificar que la suma coincida con
    "Total Posición". Nunca copiar CUIT/comitente al email ni al repo; el PDF no se commitea.
