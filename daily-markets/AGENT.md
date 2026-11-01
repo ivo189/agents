@@ -87,7 +87,7 @@ Patrimonio neto = Total Posición + pendiente (≈ ARS 531 M); bruto/neto ≈ 2,
   MEP del PDF. No hay descalce de moneda con los bonos USD; el riesgo es precio, tasa de renovación y garantías.
   Carry = (TIR cartera bonos - tasa caución USD) en pb, en USD/día y como % del patrimonio neto.
   **Tasa de caución USD (variable):** buscar la tasa a 1 día vigente en una fuente de cauciones en dólares
-  (ver `fuente_tasa` en `cocos_cauciones.json`; intentar primero esa, luego WebSearch). Informar fecha y
+  (ver `fuente_tasa` en `cocos_cauciones.json`: Portfolio Personal, caución 1D MEP vía su API; si falla, WebSearch). Informar fecha y
   fuente. Si no se consigue dato del día, usar `tasa_anual_pct` del archivo y rotularla "referencia fija
   (2%), no actualizada". Nunca inventar la tasa.
 - sensibilidad: caída de -5/-10/-15% en los bonos => % de caída del patrimonio neto (≈ apalancamiento x caída).

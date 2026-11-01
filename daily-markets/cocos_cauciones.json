@@ -9,7 +9,25 @@
       "renovacion_automatica": null,
       "garantia_requerida_pct": null,
       "tasa_nota": "referencia aproximada; la tasa real es variable (1D, USD)",
-      "fuente_tasa": null
+      "fuente_tasa": {
+        "pagina": "https://www.portfoliopersonal.com/Cotizaciones/Cauciones",
+        "api_pendiente_de_validar": {
+          "metodo": "POST",
+          "url": "https://api.portfoliopersonal.com/api/Cotify/obtener",
+          "body": {
+            "tipo": 190,
+            "plazo": [
+              1
+            ],
+            "moneda": [
+              22013
+            ],
+            "categoria": [],
+            "subCategoria": []
+          },
+          "notas": "tipo 190=Cauciones; moneda 22013=MEP (10000=ARS, 10001=CABLE); plazo 1=INMEDIATO. Campos de respuesta: nombreCorto, ultPrecio (TNA %), precioCompra, precioVenta, volumen, fechaCierre. Tomar la fila de 1 día (ej. 'DOLARES 1'). Requiere habilitar api.portfoliopersonal.com en la red del entorno; sin validar todavía."
+        }
+      }
     }
   ],
   "costos": {
