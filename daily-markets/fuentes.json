@@ -34,7 +34,17 @@
       "carpeta_id": "1scsVHUHQTF56ps_9U7iFOTRi--S-cQ0T",
       "moneda_base": "MXN",
       "nota": "mayormente fondos comunes",
-      "formato": "Google Sheet 'Posiciones_<fecha>'; columna H = Valor de mercado en MXN; 'Mercado de dinero' vacío"
+      "formato": "Google Sheet 'Posiciones_<fecha>'; columna H = Valor de mercado en MXN; 'Mercado de dinero' vacío",
+      "inputs_manuales": [
+        {
+          "concepto": "cuenta a la vista",
+          "moneda": "MXN",
+          "valor": 30000,
+          "clase": "cash",
+          "fecha_dato": "2026-11-01",
+          "nota": "manual de Ivo; reemplazar por lectura del Sheet cuando lo cargue (fila/pestaña a la vista)"
+        }
+      ]
     }
   },
   "otros_minoritarios_usd_aprox": 15000

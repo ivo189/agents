@@ -27,6 +27,7 @@ HSBC US, HSBC MX (fondos, MXN). Hay otras minoritarias que Ivo no lista: no inve
 5. **Antigüedad**: si un estado de cuenta tiene > 10 días, marcarlo arriba. Si no se pudo leer una fuente,
    el total es parcial y hay que decirlo en el titular. Los datos de cuentas son sensibles: ni números de
    cuenta ni CUIT/SSN en el email; no commitear estados de cuenta al repo.
+5b. **Inputs manuales** (`inputs_manuales` en `fuentes.json`): sumarlos como posiciones, rotulados "manual" con su fecha; si el Sheet de la fuente ya trae esa posición (p.ej. cuenta a la vista de HSBC MX), usar el Sheet y NO duplicar.
 6. **Riesgo país / concentración**: exposición por país económico (no por moneda de cotización: los bonos AR en USD
    cotizan en ARS pero son riesgo USD-soberano AR). Reportar Argentina soberano + corporativo (p.ej. PAM) como % del bruto y
    del NETO; EE.UU., Brasil/LatAm, México, Europa, EM, global. **Apalancamiento global** = bruto/neto con todas las
