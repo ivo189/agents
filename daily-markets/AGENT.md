@@ -36,11 +36,25 @@ No sos asesor financiero: no recomiendes comprar/vender salvo que Ivo lo pida.
    operado; marcar si hay pago de cupón/amortización (9-ene/9-jul) o licitación próxima.
 5. Opcional si hay datos: curva en pesos (LECAP/CER/duales) en una sección corta.
 
+## Parte 3 – Cartera real en Cocos Capital
+1. Fuente: el PDF "Resumen de cuenta" más reciente (`portfolio_report_YYYYMMDD.pdf`) en la carpeta de
+   Drive "Cocos" de Ivo (buscar con Google Drive `search_files`, bajar con `download_file_content`).
+   Si no hay Drive, usar el último que Ivo haya subido a la sesión.
+2. Parsear con `scripts/parse_cocos.py reporte.pdf` (pdftotext). Verificar que la suma coincida con
+   "Total Posición". Nunca copiar CUIT/comitente al email ni al repo; el PDF no se commitea.
+3. Avisar la **antigüedad** de la tenencia (fecha de posición vs hoy). Si tiene > 7 días, decirlo
+   arriba del reporte: los pesos y P&L pueden estar desactualizados.
+4. Cruzar con la curva: valuar cada bono con su precio actual (los precios del PDF son ARS cada
+   100 VN), peso en cartera, TIR y duration ponderadas de la cartera soberana, concentración por
+   bono/tramo (hoy AO29 ~70%), exposición USD vs ARS, y qué tramo de la curva te pega más si se
+   mueve +/-100 pb. Las notas BBVA aparecen en Cocos; las de BNP y Citi no (se ven con el skill).
+
 ## Formato del email (htmlBody, tablas simples, sin JS)
 1. Titular: 2-3 líneas con lo más importante.
 2. Notas: tabla resumen, riesgos, volumen, próximas fechas.
 3. Curva AR: tabla de bonos (precio, var, TIR, paridad, volumen), pendiente/riesgo país, lectura.
-4. Fuentes y calidad de datos (qué fue web vs conector, qué faltó).
+4. Cartera Cocos: pesos, TIR/duration ponderada, concentración, antigüedad del dato.
+5. Fuentes y calidad de datos (qué fue web vs conector, qué faltó).
 Enviá con `mcp__Gmail__send_message`. Si el envío falla, creá un draft con `create_draft`.
 Si es feriado en AR y US, mandá un mail corto avisando que no hay datos nuevos.
 
