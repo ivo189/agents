@@ -40,7 +40,17 @@ No sos asesor financiero: no recomiendes comprar/vender salvo que Ivo lo pida.
 1. Bonos: GD29, GD30, GD35, GD38, GD41, GD46 (referencia: AL30/AL35/AE38/AL41). Precio, variación
    diaria/semanal y **volumen** de cada uno: `mcp-tv-get-ohlcv` sobre `BCBA:<ticker>D` (cotización
    MEP; el sufijo D es USD). Si falta alguno, decilo.
-2. TIR, duration y paridad: no están en TradingView. Obtenelas con WebSearch de fuentes públicas
+2. **Fuente primaria (BondTerminal, ya habilitada en la red del entorno):** `curl -s
+   "https://bondterminal.com/api/landing/sovereign?basis=mep"` devuelve JSON con `sections[].bonds[]`:
+   `ticker` (sufijo D = USD MEP), `price` (USD por 100 VN), `changePercent1D`, `ytm`, `modDuration`,
+   `gSpread` (pb), `amountOutstanding`; incluye GD29/30/35/38/41/46, AL29/30/35, AE38, AL41, AO27/28/29,
+   AN29. Riesgo país: `.../api/landing/riesgo` (`valueBps`, `deltas`, serie `sparklineData`, y `ambitoValue`
+   como contraste). Es una sola fuente y una sola base (MEP), así que las TIR son comparables entre bonos.
+   Usá `asOfDisplay`/`curveDate` para informar la fecha del dato. Son endpoints públicos de la página; los
+   términos de BondTerminal mencionan una API con claves y límites: hacer pocas llamadas por día (1-3) y,
+   si Ivo consigue una API key, pasar a esa. Si falla, caer a TradingView (precio/volumen) + WebSearch.
+   Para AO29 (TradingView no sirve) tomá precio y TIR de BondTerminal.
+   (Antiguo, solo fallback) TIR, duration y paridad: no están en TradingView. Obtenelas con WebSearch de fuentes públicas
    (Bonistas, Rava, Ámbito, IAMC) y citá la fuente y hora. **No inventes TIRs**: si no conseguís
    un dato, dejalo vacío y avisá. También riesgo país (EMBI JPM) y, si hay, dólar MEP/CCL y brecha.
    (Los hosts de APIs directas están bloqueados en el sandbox; usar WebSearch.)
