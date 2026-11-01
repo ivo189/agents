@@ -86,10 +86,15 @@ Patrimonio neto = Total Posición + pendiente (≈ ARS 531 M); bruto/neto ≈ 2,
 - La caución de Ivo es **en USD** (tasa ~2% anual según Ivo; AO29 rinde ~8%): deuda USD = pendiente ARS /
   MEP del PDF. No hay descalce de moneda con los bonos USD; el riesgo es precio, tasa de renovación y garantías.
   Carry = (TIR cartera bonos - tasa caución USD) en pb, en USD/día y como % del patrimonio neto.
-  Tasa caución: la de `cocos_cauciones.json`; contrastar con la vigente (WebSearch) y avisar si difiere.
+  **Tasa de caución USD (variable):** buscar la tasa a 1 día vigente en una fuente de cauciones en dólares
+  (ver `fuente_tasa` en `cocos_cauciones.json`; intentar primero esa, luego WebSearch). Informar fecha y
+  fuente. Si no se consigue dato del día, usar `tasa_anual_pct` del archivo y rotularla "referencia fija
+  (2%), no actualizada". Nunca inventar la tasa.
 - sensibilidad: caída de -5/-10/-15% en los bonos => % de caída del patrimonio neto (≈ apalancamiento x caída).
-- vencimiento/renovación de la caución y riesgo de margin call/garantías, si Ivo cargó esos datos
-  (`daily-markets/cocos_cauciones.json`: monto, tasa, vencimiento). Si no están, avisar que son supuestos.
+- Margin call: Ivo tiene acuerdos de margen con Cocos y su plan es esperar la recuperación del AO29
+  mientras devenga. NO lo marques como alerta ni insistas; la sensibilidad a caídas es solo informativa.
+- P&L no realizado: costo de AO29 = 95 (USD por 100 VN, según Ivo) vs precio de hoy; mostrar también
+  TIR de entrada (~8%) vs TIR actual, y el carry diario devengado vs caución.
 No interpretes el RESULTADO del PDF como pérdida: mezcla aportes y pendiente.
 
 ## Formato del email (htmlBody, tablas simples, sin JS)

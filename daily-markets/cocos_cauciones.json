@@ -1,7 +1,22 @@
 {
   "_nota": "Datos informados por Ivo (no surgen del PDF). Completar null cuando los tenga.",
   "cauciones": [
-    {"moneda": "USD", "monto_usd_aprox": 460000, "tasa_anual_pct": 2.0,
-     "vencimiento": null, "renovacion_automatica": null, "garantia_requerida_pct": null}
-  ]
+    {
+      "moneda": "USD",
+      "monto_usd_aprox": 460000,
+      "tasa_anual_pct": 2.0,
+      "vencimiento": null,
+      "renovacion_automatica": null,
+      "garantia_requerida_pct": null,
+      "tasa_nota": "referencia aproximada; la tasa real es variable (1D, USD)",
+      "fuente_tasa": null
+    }
+  ],
+  "costos": {
+    "AO29": {
+      "precio_compra_usd_por_100": 95,
+      "fuente": "Ivo"
+    }
+  },
+  "margen": "Ivo tiene acuerdos de margen con Cocos; no se espera margin call."
 }
