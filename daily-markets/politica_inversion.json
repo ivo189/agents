@@ -1,14 +1,42 @@
 {
   "_nota": "PROPUESTA inicial del agente, a confirmar/editar por Ivo. No es asesoramiento financiero.",
   "flujos_ahorro_usd": [
-    {"mes": "2026-11", "monto": 10000},
-    {"mes": "2026-12", "monto": 10000},
-    {"mes": "2027-01", "monto": 10000, "extra": 100000, "nota": "extra ~100.000 aprox. en enero (estimado de Ivo)"}
+    {
+      "mes": "2026-11",
+      "monto": 10000
+    },
+    {
+      "mes": "2026-12",
+      "monto": 10000
+    },
+    {
+      "mes": "2027-01",
+      "monto": 10000,
+      "extra": 100000,
+      "nota": "extra ~100.000 aprox. en enero (estimado de Ivo)"
+    }
   ],
   "limites_propuestos": {
     "argentina_soberano_pct_neto_max": 90,
     "apalancamiento_global_max": 1.5,
     "una_sola_accion_o_subyacente_pct_neto_max": 6
   },
-  "pendientes_confirmar": ["horizonte (años)", "colchón de liquidez en meses de gastos", "tolerancia a caída del neto (%)", "restricciones fiscales/de traslado entre cuentas"]
+  "pendientes_confirmar": [
+    "colchón de liquidez explícito (hoy: usar la reserva secundaria)",
+    "tolerancia a caída del neto (%)",
+    "costo de traslado entre cuentas (wires a Cocos)",
+    "fiscalidad por cuenta"
+  ],
+  "horizonte_anios": 3,
+  "horizonte_nota": "Ivo (1-nov-2026): horizonte 3 años (≈ nov-2029; el AO29 vence 31-oct-2029). Sin necesidad de liquidez inmediata; puede cambiar.",
+  "reserva_liquida_secundaria": {
+    "fuentes": [
+      "Citi 4082 (ETFs UCITS)",
+      "Citi 2245 (ETFs líquidos)",
+      "HSBC US (Janus Balanced)",
+      "HSBC MX (fondos + MXN 30.000 a la vista)"
+    ],
+    "monto_usd_aprox": 205000,
+    "nota": "Si cambia la necesidad de liquidez, Ivo usaría estos activos; no hace falta mantener caja ociosa del ahorro nuevo."
+  }
 }

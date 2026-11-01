@@ -143,6 +143,7 @@ límites propuestos, pendientes por confirmar) y el estado consolidado de la Par
 5. Marco, no orden: sin lenguaje de "comprá/vendé"; explicar trade-offs (p. ej. repagar caución al 0,5% rinde poco pero baja
    riesgo; D tiene más carry pero no diversifica). Cerrar con "no es asesoramiento financiero; decide Ivo" y listar los datos
    pendientes de confirmar (horizonte, colchón de liquidez, tolerancia a caída, costos de traslado, fiscalidad).
+5b. Horizonte de Ivo: 3 años (≈ nov-2029); liquidez inmediata no requerida, reserva secundaria = ETFs de Citi + HSBC (≈ USD 205 mil, ver política). Por eso el ahorro nuevo no necesita quedar en caja ociosa; comparar opciones con vencimiento ≤ 3 años (T-bills, UST 2Y 4,6%) y notar que el AO29 vence dentro del horizonte (31-oct-2029). Si el horizonte o la liquidez cambian, Ivo edita `politica_inversion.json`.
 6. Si cambian los flujos reales, Ivo edita `politica_inversion.json`; el agente no inventa ahorros no declarados.
 
 ## Formato del email (htmlBody, tablas simples, sin JS)
