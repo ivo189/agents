@@ -130,11 +130,27 @@ Patrimonio neto = Total Posición + pendiente (≈ ARS 531 M); bruto/neto ≈ 2,
   TIR de entrada (~8%) vs TIR actual, y el carry diario devengado vs caución.
 No interpretes el RESULTADO del PDF como pérdida: mezcla aportes y pendiente.
 
+## Parte 5 – Dónde alocar futuros ahorros
+Capítulo del email (después de volumen, antes de calidad de datos). Insumos: `politica_inversion.json` (flujos de ahorro,
+límites propuestos, pendientes por confirmar) y el estado consolidado de la Parte 0.
+1. Recalcular con datos frescos: neto, bruto, caución, AR soberano (USD), TIR de la cartera AR, tasa de caución USD
+   (`caucion_usd.py`), tasa libre de riesgo (T-bill 3M / UST 2Y / 10Y de TradingView `TVC:US03MY`, `TVC:US02Y`, `TVC:US10Y`).
+2. Correr `scripts/asignacion.py` con `flujo` = ahorro acumulado pendiente (hoy USD 130.000 a fin de enero 2027:
+   10.000 en nov, dic y ene + ~100.000 extra en enero) y mostrar los escenarios A (repagar caución), B (diversificar fuera de AR),
+   C (mixto), D (más soberano AR, solo referencia) con neto, apalancamiento, % AR sobre neto, pérdida ante shock AR y delta de carry.
+3. Contrastar con los límites de `politica_inversion.json` y decir cuáles se cumplen/violan en cada escenario.
+4. Cronograma: qué ahorro ya entró (comparar con el flujo previsto) y cuál es el siguiente tramo; evitar mover plata sin costo/sentido.
+5. Marco, no orden: sin lenguaje de "comprá/vendé"; explicar trade-offs (p. ej. repagar caución al 0,5% rinde poco pero baja
+   riesgo; D tiene más carry pero no diversifica). Cerrar con "no es asesoramiento financiero; decide Ivo" y listar los datos
+   pendientes de confirmar (horizonte, colchón de liquidez, tolerancia a caída, costos de traslado, fiscalidad).
+6. Si cambian los flujos reales, Ivo edita `politica_inversion.json`; el agente no inventa ahorros no declarados.
+
 ## Formato del email (htmlBody, tablas simples, sin JS)
 1. Titular: 2-3 líneas con lo más importante.
 2. Notas: tabla resumen, riesgos, volumen, próximas fechas.
 3. Curva AR: tabla de bonos (precio, var, TIR, paridad, volumen), pendiente/riesgo país, lectura.
 4. Cartera Cocos: pesos, TIR/duration ponderada, concentración, antigüedad del dato.
+4b. Dónde alocar futuros ahorros (Parte 5).
 5. Fuentes y calidad de datos (qué fue web vs conector, qué faltó).
 Enviá con `mcp__Gmail__send_message`. Si el envío falla, creá un draft con `create_draft`.
 Si es feriado en AR y US, mandá un mail corto avisando que no hay datos nuevos.

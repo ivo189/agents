@@ -1,0 +1,14 @@
+{
+  "_nota": "PROPUESTA inicial del agente, a confirmar/editar por Ivo. No es asesoramiento financiero.",
+  "flujos_ahorro_usd": [
+    {"mes": "2026-11", "monto": 10000},
+    {"mes": "2026-12", "monto": 10000},
+    {"mes": "2027-01", "monto": 10000, "extra": 100000, "nota": "extra ~100.000 aprox. en enero (estimado de Ivo)"}
+  ],
+  "limites_propuestos": {
+    "argentina_soberano_pct_neto_max": 90,
+    "apalancamiento_global_max": 1.5,
+    "una_sola_accion_o_subyacente_pct_neto_max": 6
+  },
+  "pendientes_confirmar": ["horizonte (años)", "colchón de liquidez en meses de gastos", "tolerancia a caída del neto (%)", "restricciones fiscales/de traslado entre cuentas"]
+}
