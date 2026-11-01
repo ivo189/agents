@@ -4,6 +4,22 @@ Corre lun-vie ~8:30 ART (pre-apertura). Todo en español rioplatense, directo. U
 ivo.airasca.porta@gmail.com con asunto `Reporte diario DD/MM – Notas y curva AR`.
 No sos asesor financiero: no recomiendes comprar/vender salvo que Ivo lo pida.
 
+## Prioridad y control de calidad (leer primero)
+- Orden de prioridad si falta tiempo/contexto: (1) notas + riesgos, (2) cartera Cocos + apalancamiento,
+  (3) curva, (4) proyección de volumen, (5) vol realizada. Mandá igual el email y declarar lo omitido.
+  Para no quedarte corto: traé OHLCV con `summary=true` cuando solo necesites agregados, y armá un único
+  JSON por script (volumen y cierres de todos los tickers) en vez de una corrida por ticker.
+- **Saneá datos de TradingView**: descartá precios ≤ 0, volúmenes absurdos (> 1e12) o series vacías
+  (pasa con `BCBA:AO29`/`AO29D`: devuelve negativos y volumen 1e100). En ese caso usá el precio del PDF
+  de Cocos, aclaralo y no proyectes volumen de ese bono.
+- **Riesgo país**: tomalo del texto/tabla de la fuente (nunca de un slug o número de la URL) y confirmalo
+  con una segunda fuente; si difieren > 15 pb, informá ambos.
+- **TIR**: usar UNA sola fuente por día para todos los bonos (misma base: TIR en USD sobre precio MEP,
+  efectiva anual) y decir cuál es. No mezclar fuentes ni comparar AL vs GD si la base no es la misma.
+  Es orden de magnitud: si dos fuentes difieren > 100 pb para el mismo bono, avisarlo en el mail.
+- **Caución USD**: usar la tasa de `cocos_cauciones.json` (informada por Ivo, ~2%). No compararla con la
+  caución en pesos (otra moneda); no hace falta buscar una tasa USD pública.
+
 ## Parte 1 – Notas estructuradas
 1. Invocá el skill `estado-notas-estructuradas` y seguí su procedimiento tal cual (fecha = hoy en
    America/Argentina/Buenos_Aires; precios de los 8 tickers MS, SOXX, GS, MSFT, ORCL, MELI, NU, BBD).
@@ -12,7 +28,7 @@ No sos asesor financiero: no recomiendes comprar/vender salvo que Ivo lo pida.
    colchón en pp a barrera de cupón y de capital, y a autocall; próxima observación y días que faltan.
 3. **Riesgos**: nota a < 15 pp de barrera, cupón en riesgo en la próxima observación, concentración
    MELI/NU (nominal total expuesto), correlación/divergencia entre subyacentes de las worst-of,
-   volatilidad realizada 20d vs 60d. Lo sorprendente va arriba.
+   volatilidad realizada 20d vs 60d (`scripts/realized_vol.py`, cierres de ≥ 61 ruedas). Lo sorprendente va arriba.
 4. **Proyección de volumen** de los 8 subyacentes: traé ≥ 21 ruedas de volumen (OHLCV 1D), armá un
    JSON `{"MELI":[...],...}` en el scratchpad y corré `daily-markets/scripts/volume_projection.py
    input.json [TICKER=fecha_observacion]`. Informá volumen último día, ratio vs mediana 20d,
