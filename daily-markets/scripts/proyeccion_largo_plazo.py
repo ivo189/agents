@@ -6,7 +6,7 @@ los demas soberanos como bono sintetico calibrado a precio y duration de BondTer
 import json, sys, math, argparse
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--recovery", type=float, default=0.40)       # valor de los bonos tras default/canje (fraccion del nominal)
+ap.add_argument("--recovery", type=float, default=0.40)       # valor de los bonos tras default/canje (fraccion del nominal); -1 = precio implicito en el riesgo pais del escenario
 ap.add_argument("--ret-otros", type=float, default=0.0)       # retorno anual de activos no-AR (ETFs, IBKR, HSBC, notas)
 ap.add_argument("--caucion-tasa", type=float, default=0.5)    # TNA % caucion USD
 ap.add_argument("--tbill", type=float, default=4.1)           # TNA % T-bills
@@ -94,7 +94,11 @@ def correr(rp, estrategia):
             spread = p["g"] if not post else rp * p["g"] / RP0
             y = UST(max(T, 0.01)) + spread / 100
             px = price(y, p["c"], T) if T > 0 else 100.0
-            if defaulted: px = args.recovery * 100
+            if defaulted:
+                if args.recovery < 0:      # modo mercado: congela el precio implicito en el riesgo pais del escenario (dic-27)
+                    T14 = p["T0"] - DEFAULT_M / 12
+                    px = price(UST(max(T14, 0.01)) + rp * p["g"] / RP0 / 100, p["c"], T14)
+                else: px = args.recovery * 100
             val = p["face"] * px / 100
             if k == "AO29" and m == 36 and not defaulted: venc = val; val = 0.0
             ar += val
