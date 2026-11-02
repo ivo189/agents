@@ -146,12 +146,30 @@ límites propuestos, pendientes por confirmar) y el estado consolidado de la Par
 5b. Horizonte de Ivo: 3 años (≈ nov-2029); liquidez inmediata no requerida, reserva secundaria = ETFs de Citi + HSBC (≈ USD 205 mil, ver política). Por eso el ahorro nuevo no necesita quedar en caja ociosa; comparar opciones con vencimiento ≤ 3 años (T-bills, UST 2Y 4,6%) y notar que el AO29 vence dentro del horizonte (31-oct-2029). Si el horizonte o la liquidez cambian, Ivo edita `politica_inversion.json`.
 6. Si cambian los flujos reales, Ivo edita `politica_inversion.json`; el agente no inventa ahorros no declarados.
 
+## Parte 6 – Serie de tiempo del apalancamiento (semanal)
+Cada corrida agrega UNA fila a la planilla "Evolucion Ratio apalncamiento" (id en `fuentes.json` -> `serie_apalancamiento`;
+hoja `Hoja 1`) y la incluye en el email. Es el único registro histórico: las sesiones del agente son efímeras, así que
+la planilla es la memoria entre semanas.
+1. Leer `'Hoja 1'!A:M` con `get_values`. Si ya existe una fila con la misma fecha de corte, NO duplicar: actualizarla.
+2. Con los números de la Parte 0 y 3 armar la fila con `scripts/serie_apalancamiento.py` (fecha = viernes de corte;
+   bruto global y neto global del consolidado; caución USD; bruto Cocos; AR soberano en USD; MEP; riesgo país BondTerminal)
+   y escribirla con `update_formulas` en la primera fila vacía (columnas D, E, G, H, J son fórmulas: no pegar valores).
+   Apalancamiento = activos brutos / patrimonio neto; global = todas las fuentes; Cocos = bruto Cocos / (bruto Cocos − caución).
+   En la columna M escribir fuente y antigüedad de los datos (p. ej. "Cocos 31-oct, Citi 1-nov"); si falta una fuente, decirlo.
+3. Verificar leyendo la fila de nuevo (neto > 0, ratios plausibles). Si la deuda aparece fuera de Cocos (p. ej. margen en IBKR),
+   no cambiar la definición en silencio: avisarlo en el email y en la nota de la fila.
+4. En el email: tabla de las últimas 12 semanas (fecha, apalancamiento global, apalancamiento Cocos, neto global, riesgo país),
+   variación vs semana anterior (en x y %), vs la primera fila y mínimo/máximo del período, más el link a la planilla. Si hay
+   una sola fila, decir que la serie recién empieza. El gráfico de líneas vive en la planilla (celda O1); no se embebe en el mail.
+5. Los datos históricos no se reescriben: si un dato viejo estaba mal, agregar una nota en M, no borrar la fila.
+
 ## Formato del email (htmlBody, tablas simples, sin JS)
 1. Titular: 2-3 líneas con lo más importante.
 2. Notas: tabla resumen, riesgos, volumen, próximas fechas.
 3. Curva AR: tabla de bonos (precio, var, TIR, paridad, volumen), pendiente/riesgo país, lectura.
 4. Cartera Cocos: pesos, TIR/duration ponderada, concentración, antigüedad del dato.
 4b. Dónde alocar futuros ahorros (Parte 5).
+4c. Serie de apalancamiento (Parte 6): tabla de 12 semanas + link a la planilla.
 5. Fuentes y calidad de datos (qué fue web vs conector, qué faltó).
 Enviá con `mcp__Gmail__send_message`. Si el envío falla, creá un draft con `create_draft`.
 Si es feriado en AR y US, mandá un mail corto avisando que no hay datos nuevos.

@@ -47,5 +47,12 @@
       ]
     }
   },
-  "otros_minoritarios_usd_aprox": 15000
+  "otros_minoritarios_usd_aprox": 15000,
+  "serie_apalancamiento": {
+    "spreadsheet_id": "1Cf2ia_4LHchQl2a2aNR1aiCQei3rPkBfTqQr5Xpc6Qg",
+    "hoja": "Hoja 1",
+    "url": "https://docs.google.com/spreadsheets/d/1Cf2ia_4LHchQl2a2aNR1aiCQei3rPkBfTqQr5Xpc6Qg/edit",
+    "script": "scripts/serie_apalancamiento.py",
+    "grafico": "línea E y H en O1 (rango hasta fila 105)"
+  }
 }
