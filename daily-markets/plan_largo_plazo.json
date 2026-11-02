@@ -1,0 +1,30 @@
+{
+  "_nota": "Supuestos del plan a largo plazo (modelo scripts/proyeccion_largo_plazo.py). Editables por Ivo.",
+  "aportes_usd": {
+    "2026-11": 15000,
+    "2026-12": 15000,
+    "2027-01": 80000,
+    "2027-02": 20000,
+    "2027-03": 20000,
+    "2027-04..2027-12": "6000/mes",
+    "2028-01": 100000,
+    "2028-02..2029-10": "3000/mes"
+  },
+  "escenarios": {
+    "S1": "Milei reelecto oct-2027, riesgo país 300 pb",
+    "S2": "Centro con riesgo, 1000 pb",
+    "S3": "Default/canje, 2000 pb, recupero 40% del nominal"
+  },
+  "estrategias": {
+    "A": "todo flujo repaga caución en Cocos hasta cerrarla; luego T-bills",
+    "B": "todo flujo a T-bills afuera; caución se mantiene y se cancela al vencer el AO29"
+  },
+  "parametros": {
+    "tbill_tna": 4.1,
+    "caucion_tna": 0.5,
+    "ret_otros_anual": 0,
+    "recupero_default": 0.4,
+    "mes_eleccion": "2027-10",
+    "mes_default": "2027-12"
+  }
+}

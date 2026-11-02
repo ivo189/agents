@@ -163,6 +163,13 @@ la planilla es la memoria entre semanas.
    una sola fila, decir que la serie recién empieza. El gráfico de líneas vive en la planilla (celda O1); no se embebe en el mail.
 5. Los datos históricos no se reescriben: si un dato viejo estaba mal, agregar una nota en M, no borrar la fila.
 
+## Parte 7 – Plan a largo plazo (bajo demanda)
+No va en el reporte semanal salvo que Ivo lo pida. Modelo: `scripts/proyeccion_largo_plazo.py` (supuestos en `plan_largo_plazo.json`):
+3 escenarios de riesgo país (300 / 1000 / 2000 pb con default) × 2 estrategias (A repagar caución en Cocos, B T-bills afuera),
+mensual hasta oct-2029. Reportar neto global, apalancamiento global y de Cocos, caución y AR/neto en los hitos (mar-27, oct-27,
+dic-27, dic-28, oct-29), y SIEMPRE el patrimonio neto de Cocos en el escenario 3 (puede quedar negativo en B). Aclarar las
+simplificaciones (bonos sintéticos salvo AO29, shock instantáneo, sin impuestos). No es asesoramiento financiero.
+
 ## Formato del email (htmlBody, tablas simples, sin JS)
 1. Titular: 2-3 líneas con lo más importante.
 2. Notas: tabla resumen, riesgos, volumen, próximas fechas.
