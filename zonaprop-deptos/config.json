@@ -1,0 +1,30 @@
+{
+  "_nota": "Las URLs son un punto de partida: verificalas en el navegador (o pegá la URL ya filtrada desde zonaprop.com.ar). Paginación: se agrega -pagina-N antes de .html.",
+  "criterios": {
+    "ambientes_min": 3,
+    "cochera_min": 1,
+    "antiguedad_preferida_max": 30,
+    "penalizacion_antiguedad_mayor": 10,
+    "penalizacion_antiguedad_desconocida": 3,
+    "m2_min": 45,
+    "usd_m2_min": 600,
+    "usd_m2_max": 8000,
+    "min_grupo_benchmark": 4,
+    "top_detalle": 40,
+    "top_reporte": 25
+  },
+  "busquedas": [
+    {"ciudad": "Rosario", "zona": "Pichincha",     "url": "https://www.zonaprop.com.ar/departamentos-venta-pichincha-rosario.html"},
+    {"ciudad": "Rosario", "zona": "Puerto Norte",  "url": "https://www.zonaprop.com.ar/departamentos-venta-puerto-norte-rosario.html"},
+    {"ciudad": "Rosario", "zona": "Zona Río",      "url": "https://www.zonaprop.com.ar/departamentos-venta-rosario-zona-rio.html"},
+    {"ciudad": "CABA", "zona": "Palermo",          "url": "https://www.zonaprop.com.ar/departamentos-venta-palermo.html"},
+    {"ciudad": "CABA", "zona": "Palermo Soho",     "url": "https://www.zonaprop.com.ar/departamentos-venta-palermo-soho.html"},
+    {"ciudad": "CABA", "zona": "Palermo Hollywood","url": "https://www.zonaprop.com.ar/departamentos-venta-palermo-hollywood.html"},
+    {"ciudad": "CABA", "zona": "Palermo Chico",    "url": "https://www.zonaprop.com.ar/departamentos-venta-palermo-chico.html"},
+    {"ciudad": "CABA", "zona": "Palermo Viejo",    "url": "https://www.zonaprop.com.ar/departamentos-venta-palermo-viejo.html"},
+    {"ciudad": "CABA", "zona": "Las Cañitas",      "url": "https://www.zonaprop.com.ar/departamentos-venta-las-canitas.html"},
+    {"ciudad": "CABA", "zona": "Núñez",            "url": "https://www.zonaprop.com.ar/departamentos-venta-nunez.html"}
+  ],
+  "paginas_max": 6,
+  "pausa_seg": [3, 7]
+}
