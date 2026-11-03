@@ -169,6 +169,7 @@ riesgo país (300 / 1000 / 2000 pb con default) x estrategias A, A2 (50% repago 
 A4 (A2 + vender bonos largos) y B (T-bills afuera), mensual hasta oct-2029. Cupones: AO29 mensual 0,5%; resto de soberanos semestral
 (ene/jul); notas de Cocos (70.000 en 3 notas) por term sheet. Las gráficas viven en la pestaña "Proyección LP" del Google Sheet de
 apalancamiento (id en `fuentes.json` -> `serie_apalancamiento`; gid 777), con 10 gráficos nativos que se actualizan solos al reescribir los datos.
+Nombres (Ivo): estrategias A = "Reducir caución", A2 = "Mixta", B = "T-bills", A4 = "Mixta + vender largos"; escenarios S1 = "Milei reelecto", S2 = "Oposición con shock", S3 = "Reestructuración". Usar SIEMPRE estos nombres en el email y los informes (no los códigos).
 Cada semana:
 1. Leer de la pestaña la fila del mes en curso (`get_values` de `'Proyección LP'!A:AK`) y comparar el apalancamiento global, el de Cocos y el
    patrimonio neto REALES (Parte 0/3/6) contra A, A2 y B de cada escenario: "real vs proyectado" y a qué estrategia se parece el camino real.

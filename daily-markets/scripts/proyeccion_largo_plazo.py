@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Plan a largo plazo v2: 3 escenarios de riesgo pais x estrategias, mensual nov-2026 .. oct-2029 (vence AO29).
 Estrategias:
-  A  : todo flujo (aportes + cupones + vencimientos) repaga caucion en Cocos hasta cerrarla; luego T-bills.
-  A2 : mitad del aporte fresco repaga caucion y mitad va a un fondo USA 60/40; TODOS los cupones/vencimientos repagan caucion.
+  A  = 'Reducir caución': todo flujo (aportes + cupones + vencimientos) repaga caucion en Cocos hasta cerrarla; luego T-bills.
+  A2 = 'Mixta': mitad del aporte fresco repaga caucion y mitad va a un fondo USA 60/40; TODOS los cupones/vencimientos repagan caucion.
   A4 : como A2, pero ademas vende hoy los bonos largos (AL35, AE38, AL41, GD46, GD29) y usa el producto para repagar caucion.
-  B  : todo flujo a T-bills afuera; la caucion se mantiene y solo se cancela al vencer el AO29 (colateral).
+  B  = 'T-bills': todo flujo a T-bills afuera; la caucion se mantiene y solo se cancela al vencer el AO29 (colateral).
 Uso: python proyeccion_largo_plazo.py [--json] [--recovery -1|0.40] [--ret-otros 6] [--caucion-tasa 0.5] [--tbill 4.1]
      [--ret-acc 7] [--ret-rf 4.5] [--eq-shock-dic27 0]
 Cupones: AO29 mensual 0,5%; resto semestral (ene/jul); notas de Cocos (70.000 en 3 notas) segun term sheets, capital al par a vencimiento."""
@@ -81,8 +81,8 @@ def fecha(m):
 def escenarios():
     e = args.election_m
     return {"S1": {"nombre": "Milei reelecto (RP 300)", "post": [(e, 300)], "default": False},
-            "S2": {"nombre": f"Oposición que paga, shock post-elección (RP {int(args.s2_peak)})", "post": [(e, args.s2_peak), (e + args.s2_hold, args.s2_peak), (36, args.s2_end)], "default": False},
-            "S3": {"nombre": "Reestructuración / canje (RP 2000)", "post": [(e, 2000)], "default": True}}
+            "S2": {"nombre": f"Oposición con shock (RP {int(args.s2_peak)})", "post": [(e, args.s2_peak), (e + args.s2_hold, args.s2_peak), (36, args.s2_end)], "default": False},
+            "S3": {"nombre": "Reestructuración (RP 2000)", "post": [(e, 2000)], "default": True}}
 ESTRATEGIAS = ["A", "A2", "A4", "B"]
 r_fund = ((0.6 * (1 + args.ret_acc / 100) + 0.4 * (1 + args.ret_rf / 100))) ** (1 / 12) - 1   # 60/40 rebalanceado mensual aprox.
 

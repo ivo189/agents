@@ -16,10 +16,10 @@
     "S3": "Reestructuración / canje: 2.000 pb, cupones suspendidos desde dic-2027, bonos a precio implícito (estrés: recupero 40%)"
   },
   "estrategias": {
-    "A": "todo flujo (aportes+cupones+vencimientos) repaga caución en Cocos hasta cerrarla; luego T-bills",
-    "A2": "mitad del aporte fresco repaga caución y mitad va a fondo USA 60/40; todos los cupones y vencimientos repagan caución; luego al 60/40",
-    "A4": "A2 + vender hoy los bonos largos (AL35, AE38, AL41, GD46, GD29) y repagar caución con el producto",
-    "B": "todo flujo a T-bills afuera; caución se mantiene y se cancela al vencer el AO29"
+    "A (Reducir caución)": "todo flujo (aportes+cupones+vencimientos) repaga caución en Cocos hasta cerrarla; luego T-bills",
+    "A2 (Mixta)": "mitad del aporte fresco repaga caución y mitad va a fondo USA 60/40; todos los cupones y vencimientos repagan caución; luego al 60/40",
+    "A4 (Mixta + vender largos)": "A2 + vender hoy los bonos largos (AL35, AE38, AL41, GD46, GD29) y repagar caución con el producto",
+    "B (T-bills)": "todo flujo a T-bills afuera; caución se mantiene y se cancela al vencer el AO29"
   },
   "parametros": {
     "tbill_tna": 4.1,
@@ -49,5 +49,19 @@
     "gid": 777,
     "script": "scripts/proyeccion_a_sheet.py",
     "graficos": "10 gráficos nativos (apal. global, apal. Cocos, neto por escenario; posición AR)"
+  },
+  "nombres": {
+    "estrategias": {
+      "A": "Reducir caución",
+      "A2": "Mixta",
+      "B": "T-bills",
+      "A4": "Mixta + vender largos"
+    },
+    "escenarios": {
+      "S1": "Milei reelecto",
+      "S2": "Oposición con shock",
+      "S3": "Reestructuración"
+    },
+    "nota": "Nombres definidos por Ivo (3-nov-2026). En el código se mantienen A, A2, B y S1-S3."
   }
 }

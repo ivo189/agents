@@ -17,9 +17,11 @@ VARS = {k: json.load(open(f)) for k, f in (x.split("=", 1) for x in a.var)}
 ESTR = {k: json.load(open(f))["resultados"] for k, f in (x.split("=", 1) for x in a.estres)}
 KEYS = list(VARS)
 base = VARS[KEYS[0]]; R = base["resultados"]; estres = None
-ST = [("A", "A · repagar todo", "var(--s1)", ""), ("A2", "A2 · 50% repago + 50% USA 60/40", "var(--s2)", "7 4"), ("B", "B · T-bills afuera", "var(--s3)", "2 3")]
+SHORT = {"A": "Reducir", "A2": "Mixta", "B": "T-bills"}
+NOM = {"A": "Reducir caución", "A2": "Mixta", "B": "T-bills", "A4": "Mixta + vender largos"}
+ST = [("A", "Reducir caución (todo repaga caución)", "var(--s1)", ""), ("A2", "Mixta (50% caución + 50% USA 60/40)", "var(--s2)", "7 4"), ("B", "T-bills (afuera de Cocos)", "var(--s3)", "2 3")]
 MES = ["oct-26", "abr-27", "oct-27", "abr-28", "oct-28", "abr-29", "oct-29"]
-W, H, ML, MR, MT, MB = 360, 230, 46, 40, 12, 28
+W, H, ML, MR, MT, MB = 372, 230, 46, 56, 12, 28
 
 def kes(v):
     return f"{v/1000:,.0f}k".replace(",", ".")
@@ -83,7 +85,7 @@ def hitos(RR):
     for sc in ("S1", "S2", "S3"):
         for e in ("A", "A2", "B"):
             rows = RR[sc]["estrategias"][e]
-            t += f'<tr><td>{sc}</td><td>{e}</td>' + "".join(f'<td class="n">{kes(rows[m]["neto"])}</td><td class="n">{(str(rows[m]["lev_global"]) if rows[m]["lev_global"] else "n/d").replace(".", ",")}x</td><td class="n">{(str(rows[m]["lev_cocos"]) if rows[m]["lev_cocos"] else "n/d").replace(".", ",")}x</td>' for m, _ in CP) + '</tr>'
+            t += f'<tr><td>{sc}</td><td>{NOM[e]}</td>' + "".join(f'<td class="n">{kes(rows[m]["neto"])}</td><td class="n">{(str(rows[m]["lev_global"]) if rows[m]["lev_global"] else "n/d").replace(".", ",")}x</td><td class="n">{(str(rows[m]["lev_cocos"]) if rows[m]["lev_cocos"] else "n/d").replace(".", ",")}x</td>' for m, _ in CP) + '</tr>'
     return t + '</table>'
 
 def seccion(k):
@@ -91,7 +93,7 @@ def seccion(k):
     def blk(titulo, desc, metric, key, ymin, ymax):
         x = f'<h3>{titulo}</h3><p class="desc">{desc}</p><div class="grid3">'
         for sc in ("S1", "S2", "S3"):
-            x += panel(f"{k}-{metric}-{sc}", f'{sc} · {RR[sc]["nombre"]}', [(e, l, c, d, sm(sc, e, key)) for e, l, c, d in ST], metric, ymin, ymax)
+            x += panel(f"{k}-{metric}-{sc}", f'{sc} · {RR[sc]["nombre"]}', [(SHORT[e], l, c, d, sm(sc, e, key)) for e, l, c, d in ST], metric, ymin, ymax)
         return x + "</div>"
     h = '<h3>Riesgo país supuesto (pb)</h3><p class="desc">Tres caminos hasta la elección (oct-2027): 800 constante, pico de 1.000 o pico de 1.200 pb en sep-27; desde ahí, el camino de cada escenario. Base: BondTerminal 796 pb al 30/10/2026.</p><div class="leg"><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2"/></svg>previa 800 pb</span><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2" stroke-dasharray="7 4"/></svg>previa 1.000 pb</span><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2" stroke-dasharray="2 3"/></svg>previa 1.200 pb</span></div><div class="grid3">'
     DASH = {"800": "", "1000": "7 4", "1200": "2 3"}
@@ -114,7 +116,7 @@ def tabla_riesgo():
             fin = VARS[KEYS[0]]["resultados"][sc]["estrategias"][e][36]["neto"]
             lc = [max((r["lev_cocos"] or 99) for r in VARS[k]["resultados"][sc]["estrategias"][e][1:36]) for k in KEYS]
             cn = [min(r["cocos_neto"] for r in VARS[k]["resultados"][sc]["estrategias"][e][1:36]) for k in KEYS]
-            t += f'<tr><td>{sc}</td><td>{e}</td><td class="n">{kes(fin)}</td>' + "".join(f'<td class="n">{str(round(x, 2)).replace(".", ",")}x</td>' for x in lc) + "".join(f'<td class="n">{kes(x)}</td>' for x in cn) + '</tr>'
+            t += f'<tr><td>{sc}</td><td>{NOM[e]}</td><td class="n">{kes(fin)}</td>' + "".join(f'<td class="n">{str(round(x, 2)).replace(".", ",")}x</td>' for x in lc) + "".join(f'<td class="n">{kes(x)}</td>' for x in cn) + '</tr>'
     return t + '</table>'
 
 def tabla_estres():
@@ -122,7 +124,7 @@ def tabla_estres():
     t = '<h3>Estrés del escenario 3: recupero del 40% del nominal tras el canje</h3><table><tr><th rowspan="2">Estrategia</th><th rowspan="2">Neto oct-29</th>' + f'<th colspan="{len(ESTR)}">Neto de Cocos mínimo</th></tr><tr>' + "".join(f"<th>previa {k}</th>" for k in ESTR) + '</tr>'
     k0 = next(iter(ESTR))
     for e in ("A", "A2", "B"):
-        t += f'<tr><td>{e}</td><td class="n">{kes(ESTR[k0]["S3"]["estrategias"][e][36]["neto"])}</td>' + "".join(f'<td class="n">{kes(min(r["cocos_neto"] for r in ESTR[k]["S3"]["estrategias"][e][1:36]))}</td>' for k in ESTR) + '</tr>'
+        t += f'<tr><td>{NOM[e]}</td><td class="n">{kes(ESTR[k0]["S3"]["estrategias"][e][36]["neto"])}</td>' + "".join(f'<td class="n">{kes(min(r["cocos_neto"] for r in ESTR[k]["S3"]["estrategias"][e][1:36]))}</td>' for k in ESTR) + '</tr>'
     return t + '</table>'
 
 def valuacion_previa():
@@ -130,8 +132,8 @@ def valuacion_previa():
     EST = {"800": ("800 pb", ""), "1000": ("1.000 pb", "7 4"), "1200": ("1.200 pb", "2 3")}
     leg_ = '<div class="leg">' + "".join(f'<span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2" {"stroke-dasharray=%r" % d if d else ""}/></svg>previa {l}</span>'.replace("'", '"') for l, d in EST.values()) + '</div>'
     metricas = [("cv", "Cartera de Cocos: bonos AR + notas + efectivo (USD)", "Valor de lo que está en Cocos, antes de restar la caución. No depende de la estrategia.", lambda r: r["cocos_neto"] + r["caucion"]),
-                ("tv", "Cartera total: activos de todas las fuentes (USD)", "Cocos + Citi + HSBC + IBKR + T-bills / fondo 60/40. Estrategia A2 como referencia; el efecto de la previa es el mismo en A y B.", lambda r: r["bruto"]),
-                ("nv", "Patrimonio neto total (USD)", "Activos totales menos la caución. Estrategia A2 como referencia.", lambda r: r["neto"])]
+                ("tv", "Cartera total: activos de todas las fuentes (USD)", "Cocos + Citi + HSBC + IBKR + T-bills / fondo 60/40. estrategia Mixta como referencia; el efecto de la previa es el mismo en A y B.", lambda r: r["bruto"]),
+                ("nv", "Patrimonio neto total (USD)", "Activos totales menos la caución. Estrategia Mixta como referencia.", lambda r: r["neto"])]
     h = '<h3>Valuación proyectada hasta la elección: Cocos y total, según la previa de riesgo país</h3><p class="desc">Las tres previas (800, 1.000 y 1.200 pb) difieren hasta septiembre de 2027 y convergen en octubre, cuando el riesgo país salta al nivel de cada escenario. Después, cada escenario sigue su camino.</p>' + leg_
     for met, titulo, desc, fn in metricas:
         vals = [fn(r) for k in KEYS for sc in VARS[k]["resultados"].values() for r in sc["estrategias"]["A2"][:NM + 1]]
@@ -154,7 +156,7 @@ def valuacion_previa():
             d = v[key] - b0[key]
             cells += f'<td class="n">{kes(v[key])}</td><td class="n">{"–" if k == KEYS[0] else (kes(d) + " (" + f"{100*d/b0[key]:.1f}%".replace(".", ",") + ")")}</td>'
         t += f'<tr><td>{EST.get(k, (k,))[0]}</td>{cells}</tr>'
-    return h + t + '</table><p class="desc">En octubre de 2027, con la elección, las tres previas valen exactamente lo mismo. Referencia: estrategia A2; en A y B el efecto en USD es idéntico.</p>'
+    return h + t + '</table><p class="desc">En octubre de 2027, con la elección, las tres previas valen exactamente lo mismo. Referencia: estrategia Mixta; en las otras dos el efecto en USD es idéntico.</p>'
 
 tabs = ""
 secs = f'<section class="var" id="v-{KEYS[0]}">{seccion(KEYS[0])}</section>' + valuacion_previa()
@@ -174,7 +176,7 @@ def tabla_aportes():
         per = lab(g["ini"]) if g["ini"] == g["fin"] else f'{lab(g["ini"])} a {lab(g["fin"])}'
         t += f'<tr><td>{per}</td><td class="n">{g["monto"]:,.0f}</td><td class="n">{g["n"]}</td><td class="n">{sub:,.0f}</td><td class="n">{acum:,.0f}</td></tr>'.replace(",", ".")
     t += f'<tr><th>Total</th><th></th><th class="n">{len(ap_)}</th><th class="n">{acum:,.0f}</th><th></th></tr></table>'.replace(",", ".")
-    t += '<p class="desc"><b>Qué hace cada estrategia con el aporte:</b> A repaga caución hasta cerrarla y después compra T-bills; A2 manda la mitad a repagar caución y la mitad a un fondo USA 60/40 (si la caución ya está cerrada, todo al 60/40); B lo manda todo a T-bills afuera de Cocos. Los cupones y vencimientos: en A y en A2 repagan caución (en A2, el 100 %); en B van a T-bills, salvo el vencimiento del AO29, que cancela la caución. <i>Interpretación mía:</i> tomé tu plan de 150 mil hasta marzo de 2027 (15 + 15 en nov-dic, 80 en ene, 20 + 20 en feb-mar) y 6 mil por mes desde abril; si querías otra cosa, decime y lo cambio.</p>'
+    t += '<p class="desc"><b>Qué hace cada estrategia con el aporte:</b> <b>Reducir caución</b> repaga caución hasta cerrarla y después compra T-bills; <b>Mixta</b> manda la mitad a repagar caución y la mitad a un fondo USA 60/40 (si la caución ya está cerrada, todo al 60/40); <b>T-bills</b> lo manda todo a T-bills afuera de Cocos. Los cupones y vencimientos: en Reducir caución y en Mixta repagan caución (en Mixta, el 100 %); en T-bills van a T-bills, salvo el vencimiento del AO29, que cancela la caución. <i>Interpretación mía:</i> tomé tu plan de 150 mil hasta marzo de 2027 (15 + 15 en nov-dic, 80 en ene, 20 + 20 en feb-mar) y 6 mil por mes desde abril; si querías otra cosa, decime y lo cambio.</p>'
     return t
 
 notas = open(a.notas).read() if a.notas else ""
@@ -212,7 +214,7 @@ document.querySelectorAll('figure.panel').forEach(function(f){{
   var n=d.s[0].v.length,MES=['nov-26','dic-26','ene-27','feb-27','mar-27','abr-27','may-27','jun-27','jul-27','ago-27','sep-27','oct-27','nov-27','dic-27','ene-28','feb-28','mar-28','abr-28','may-28','jun-28','jul-28','ago-28','sep-28','oct-28','nov-28','dic-28','ene-29','feb-29','mar-29','abr-29','may-29','jun-29','jul-29','ago-29','sep-29','oct-29'];
   function f2(m,v){{if(v===null)return 'n/d (neto<0)';if(m==='rp')return Math.round(v)+' pb';if(m==='cv')return 'USD '+Math.round(v/1000).toLocaleString('es-AR')+' mil';if(m.indexOf('lev')===0)return v.toFixed(2).replace('.',',')+'x';return 'USD '+Math.round(v/1000).toLocaleString('es-AR')+' mil';}}
   hit.addEventListener('mousemove',function(e){{var r=svg.getBoundingClientRect(),sc=r.width/svg.viewBox.baseVal.width,x=(e.clientX-r.left)/sc;var i=Math.max(0,Math.min(n-1,Math.round((x-d.ml)/d.iw*(n-1))));var px=d.ml+d.iw*i/(n-1);cr.setAttribute('x1',px);cr.setAttribute('x2',px);cr.style.display='';
-    tip.innerHTML='<b>'+(i===0?'oct-26 (hoy)':MES[i-1])+'</b><br>'+d.s.map(function(s){{return '<span style="color:'+s.c+'">●</span> '+s.k+': '+f2(d.m,s.v[i]);}}).join('<br>');tip.style.display='';tip.style.left=Math.min(r.width-190,Math.max(4,px*sc+8))+'px';}});
+    tip.innerHTML='<b>'+(i===0?'oct-26 (hoy)':MES[i-1])+'</b><br>'+d.s.map(function(s){{return '<span style="color:'+s.c+'">●</span> '+(s.l||s.k).split(' (')[0]+': '+f2(d.m,s.v[i]);}}).join('<br>');tip.style.display='';tip.style.left=Math.min(r.width-190,Math.max(4,px*sc+8))+'px';}});
   hit.addEventListener('mouseleave',function(){{cr.style.display='none';tip.style.display='none';}});
 }});
 </script></body></html>'''
