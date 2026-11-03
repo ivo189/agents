@@ -160,7 +160,8 @@ def correr(scn, est):
     return rows
 
 def todo():
-    out = {"parametros": {k: v for k, v in vars(args).items() if k != "json"},
+    out = {"aportes_usd": [{"m": m, "fecha": fecha(m), "monto": ahorro(m)} for m in range(1, 37)],
+           "parametros": {k: v for k, v in vars(args).items() if k != "json"},
            "calibracion": {k: {kk: round(vv, 3) for kk, vv in v.items()} for k, v in POS.items()}, "resultados": {}}
     for s, scn in escenarios().items():
         out["resultados"][s] = {"nombre": scn["nombre"], "rp_path": [round(rp_t(m, scn), 1) for m in range(37)],

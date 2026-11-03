@@ -158,6 +158,25 @@ def valuacion_previa():
 
 tabs = ""
 secs = f'<section class="var" id="v-{KEYS[0]}">{seccion(KEYS[0])}</section>' + valuacion_previa()
+def tabla_aportes():
+    ap_ = base.get("aportes_usd")
+    if not ap_: return ""
+    MESN = {"01": "ene", "02": "feb", "03": "mar", "04": "abr", "05": "may", "06": "jun", "07": "jul", "08": "ago", "09": "sep", "10": "oct", "11": "nov", "12": "dic"}
+    lab = lambda f: f"{MESN[f[5:]]}-{f[2:4]}"
+    grupos = []
+    for x in ap_:
+        if grupos and grupos[-1]["monto"] == x["monto"]: grupos[-1]["fin"] = x["fecha"]; grupos[-1]["n"] += 1
+        else: grupos.append({"ini": x["fecha"], "fin": x["fecha"], "monto": x["monto"], "n": 1})
+    t = '<h3>Premisas de aporte de capital</h3><p class="desc">Ahorro nuevo que se suma al capital, a fin de cada mes (USD). Son las premisas que pasó Ivo; las uso iguales en las tres estrategias.</p><table><tr><th>Período</th><th>Aporte mensual</th><th>Meses</th><th>Subtotal</th><th>Acumulado</th></tr>'
+    acum = 0
+    for g in grupos:
+        sub = g["monto"] * g["n"]; acum += sub
+        per = lab(g["ini"]) if g["ini"] == g["fin"] else f'{lab(g["ini"])} a {lab(g["fin"])}'
+        t += f'<tr><td>{per}</td><td class="n">{g["monto"]:,.0f}</td><td class="n">{g["n"]}</td><td class="n">{sub:,.0f}</td><td class="n">{acum:,.0f}</td></tr>'.replace(",", ".")
+    t += f'<tr><th>Total</th><th></th><th class="n">{len(ap_)}</th><th class="n">{acum:,.0f}</th><th></th></tr></table>'.replace(",", ".")
+    t += '<p class="desc"><b>Qué hace cada estrategia con el aporte:</b> A repaga caución hasta cerrarla y después compra T-bills; A2 manda la mitad a repagar caución y la mitad a un fondo USA 60/40 (si la caución ya está cerrada, todo al 60/40); B lo manda todo a T-bills afuera de Cocos. Los cupones y vencimientos: en A y en A2 repagan caución (en A2, el 100 %); en B van a T-bills, salvo el vencimiento del AO29, que cancela la caución. <i>Interpretación mía:</i> tomé tu plan de 150 mil hasta marzo de 2027 (15 + 15 en nov-dic, 80 en ene, 20 + 20 en feb-mar) y 6 mil por mes desde abril; si querías otra cosa, decime y lo cambio.</p>'
+    return t
+
 notas = open(a.notas).read() if a.notas else ""
 P = base["parametros"]
 page = f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proyección de largo plazo</title>
@@ -178,6 +197,7 @@ details{{margin-top:14px}}.foot{{color:var(--muted);font-size:12px;margin-top:18
 <h1>Proyección de largo plazo · nov-2026 a oct-2029</h1>
 <p class="desc">3 escenarios de resultado electoral × 3 caminos de riesgo país previo a la elección × estrategias. Punto de partida: neto global USD 666 mil, caución USD 460 mil, apalancamiento global 1,69x y de Cocos 2,37x.</p>
 {notas}
+{tabla_aportes()}
 <div class="leg">{leg}</div>
 <div class="tabs" role="tablist" aria-label="Camino del riesgo país antes de la elección">{tabs}</div>
 {secs}
