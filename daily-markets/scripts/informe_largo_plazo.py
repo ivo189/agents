@@ -27,10 +27,10 @@ def fmt(metric, v):
     if v is None: return "n/d (neto<0)"
     return f"{v:.2f}x".replace(".", ",") if metric.startswith("lev") else f"USD {v/1000:,.0f} mil".replace(",", ".")
 
-def panel(pid, titulo, series, metric, ymin, ymax, evento=12):
+def panel(pid, titulo, series, metric, ymin, ymax, evento=12, nmax=36, labels=True):
     """series: [(clave, label, color, dash, [valores m=0..36])]"""
     iw, ih = W - ML - MR, H - MT - MB
-    X = lambda m: ML + iw * m / 36
+    X = lambda m: ML + iw * m / nmax
     Y = lambda v: MT + ih * (1 - (v - ymin) / (ymax - ymin))
     g = ""
     span = ymax - ymin; raw = span / 4
@@ -41,12 +41,13 @@ def panel(pid, titulo, series, metric, ymin, ymax, evento=12):
         y = Y(v)
         if metric.startswith("lev"): lab = f"{v:.1f}x".replace(".", ",")
         elif metric == "rp": lab = f"{v:,.0f}".replace(",", ".")
+        elif metric == "cv": lab = f"{v/1000:,.0f}k".replace(",", ".")
         elif abs(v) >= 1e6: lab = f"{v/1e6:.2f}M".replace(".", ",").replace(",00M", "M")
         else: lab = f"{v/1000:,.0f}k".replace(",", ".")
         g += f'<line x1="{ML}" x2="{W-MR}" y1="{y:.1f}" y2="{y:.1f}" class="grid"/><text x="{ML-6}" y="{y+3:.1f}" class="ax" text-anchor="end">{lab}</text>'
         v += step
     for i, t in enumerate(MES):
-        g += f'<text x="{X(6*i):.1f}" y="{H-8}" class="ax" text-anchor="middle">{t}</text>'
+        if 6 * i <= nmax: g += f'<text x="{X(6*i):.1f}" y="{H-8}" class="ax" text-anchor="middle">{t}</text>'
     g += f'<line x1="{X(evento):.1f}" x2="{X(evento):.1f}" y1="{MT}" y2="{MT+ih}" class="ev"/><text x="{X(evento)+3:.1f}" y="{MT+9}" class="ax">elección</text>'
     ends = []
     for k, label, col, dash, vals in series:
@@ -60,7 +61,7 @@ def panel(pid, titulo, series, metric, ymin, ymax, evento=12):
     ends.sort(reverse=True)
     for i in range(1, len(ends)):
         if ends[i-1][0] - ends[i][0] < 11: ends[i][0] = ends[i-1][0] - 11
-    for y, k, col in ends: g += f'<text x="{W-MR+4}" y="{y+3:.1f}" class="lab" fill="var(--text)">{k}</text><circle cx="{W-MR}" cy="{y:.1f}" r="3" fill="{col}"/>'
+    for y, k, col in (ends if labels else []): g += f'<text x="{W-MR+4}" y="{y+3:.1f}" class="lab" fill="var(--text)">{k}</text><circle cx="{W-MR}" cy="{y:.1f}" r="3" fill="{col}"/>'
     data = {"t": titulo, "m": metric, "ml": ML, "iw": iw, "s": [{"k": k, "l": l, "c": c, "v": v} for k, l, c, d, v in series]}
     return (f'<figure class="panel" id="{pid}"><figcaption>{html.escape(titulo)}</figcaption>'
             f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="{html.escape(titulo)}">{g}<line class="cross" y1="{MT}" y2="{MT+ih}" x1="0" x2="0" style="display:none"/>'
@@ -122,8 +123,22 @@ def tabla_estres():
         t += f'<tr><td>{e}</td><td class="n">{kes(ESTR[k0]["S3"]["estrategias"][e][36]["neto"])}</td>' + "".join(f'<td class="n">{kes(min(r["cocos_neto"] for r in ESTR[k]["S3"]["estrategias"][e][1:36]))}</td>' for k in ESTR) + '</tr>'
     return t + '</table>'
 
-tabs = "".join(f'<button class="tab{" on" if i == 0 else ""}" data-v="{k}">{LABEL.get(k, k)}</button>' for i, k in enumerate(KEYS))
-secs = "".join(f'<section class="var" id="v-{k}" style="{"" if i == 0 else "display:none"}">{seccion(k)}</section>' for i, k in enumerate(KEYS))
+def valuacion_cocos():
+    NM = 18
+    h = '<h3>Efecto del camino previo en la valuación de la cartera de Cocos (USD)</h3><p class="desc">Bonos AR + notas + efectivo de Cocos, con la previa en 800, 1.000 o 1.200 pb. La diferencia aparece antes de la elección y desaparece en octubre de 2027, cuando el riesgo país salta al nivel del escenario.</p><div class="leg"><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2"/></svg>previa 800 pb</span><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2" stroke-dasharray="7 4"/></svg>previa 1.000 pb</span><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2" stroke-dasharray="2 3"/></svg>previa 1.200 pb</span></div><div class="grid3">'
+    lo = min(r["cocos_neto"] + r["caucion"] for k in KEYS for sc in VARS[k]["resultados"].values() for r in sc["estrategias"]["A"][:NM + 1])
+    hi = max(r["cocos_neto"] + r["caucion"] for k in KEYS for sc in VARS[k]["resultados"].values() for r in sc["estrategias"]["A"][:NM + 1])
+    EST = {"800": ("800 pb", "1 0", ""), "1000": ("1.000 pb", "", "7 4"), "1200": ("1.200 pb", "", "2 3")}
+    for sc in ("S1", "S2", "S3"):
+        ser = []
+        for k in KEYS:
+            rows = VARS[k]["resultados"][sc]["estrategias"]["A"][:NM + 1]
+            ser.append((k, f"previa {EST.get(k, (k,))[0]}", "var(--text)", EST.get(k, ("", "", ""))[2], [r["cocos_neto"] + r["caucion"] for r in rows]))
+        h += panel(f"cv-{sc}", f'{sc} · {VARS[KEYS[0]]["resultados"][sc]["nombre"]}', ser, "cv", int(lo / 50000) * 50000, int(hi / 50000 + 1) * 50000, nmax=NM, labels=False)
+    return h + "</div>"
+
+tabs = ""
+secs = f'<section class="var" id="v-{KEYS[0]}">{seccion(KEYS[0])}</section>' + valuacion_cocos()
 notas = open(a.notas).read() if a.notas else ""
 P = base["parametros"]
 page = f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proyección de largo plazo</title>
@@ -156,7 +171,7 @@ document.querySelectorAll('.tab').forEach(function(b){{b.addEventListener('click
 document.querySelectorAll('figure.panel').forEach(function(f){{
   var d=JSON.parse(f.querySelector('script').textContent),svg=f.querySelector('svg'),hit=f.querySelector('.hit'),cr=f.querySelector('.cross'),tip=f.querySelector('.tip');
   var n=d.s[0].v.length,MES=['nov-26','dic-26','ene-27','feb-27','mar-27','abr-27','may-27','jun-27','jul-27','ago-27','sep-27','oct-27','nov-27','dic-27','ene-28','feb-28','mar-28','abr-28','may-28','jun-28','jul-28','ago-28','sep-28','oct-28','nov-28','dic-28','ene-29','feb-29','mar-29','abr-29','may-29','jun-29','jul-29','ago-29','sep-29','oct-29'];
-  function f2(m,v){{if(v===null)return 'n/d (neto<0)';if(m==='rp')return Math.round(v)+' pb';if(m.indexOf('lev')===0)return v.toFixed(2).replace('.',',')+'x';return 'USD '+Math.round(v/1000).toLocaleString('es-AR')+' mil';}}
+  function f2(m,v){{if(v===null)return 'n/d (neto<0)';if(m==='rp')return Math.round(v)+' pb';if(m==='cv')return 'USD '+Math.round(v/1000).toLocaleString('es-AR')+' mil';if(m.indexOf('lev')===0)return v.toFixed(2).replace('.',',')+'x';return 'USD '+Math.round(v/1000).toLocaleString('es-AR')+' mil';}}
   hit.addEventListener('mousemove',function(e){{var r=svg.getBoundingClientRect(),sc=r.width/svg.viewBox.baseVal.width,x=(e.clientX-r.left)/sc;var i=Math.max(0,Math.min(n-1,Math.round((x-d.ml)/d.iw*(n-1))));var px=d.ml+d.iw*i/(n-1);cr.setAttribute('x1',px);cr.setAttribute('x2',px);cr.style.display='';
     tip.innerHTML='<b>'+(i===0?'oct-26 (hoy)':MES[i-1])+'</b><br>'+d.s.map(function(s){{return '<span style="color:'+s.c+'">●</span> '+s.k+': '+f2(d.m,s.v[i]);}}).join('<br>');tip.style.display='';tip.style.left=Math.min(r.width-190,Math.max(4,px*sc+8))+'px';}});
   hit.addEventListener('mouseleave',function(){{cr.style.display='none';tip.style.display='none';}});
