@@ -9,7 +9,7 @@ Paleta categorica validada (slots 1-3, all-pairs) + trazo distinto por estrategi
 import json, argparse, html
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--base", required=True); ap.add_argument("--estres"); ap.add_argument("--notas"); ap.add_argument("--out", required=True)
+ap.add_argument("--base", required=True); ap.add_argument("--estres"); ap.add_argument("--compara"); ap.add_argument("--notas"); ap.add_argument("--out", required=True)
 a = ap.parse_args()
 base = json.load(open(a.base)); R = base["resultados"]
 estres = json.load(open(a.estres))["resultados"] if a.estres else None
@@ -36,6 +36,7 @@ def panel(pid, titulo, series, metric, ymin, ymax, evento=12):
     while v <= ymax + 1e-9:
         y = Y(v)
         if metric.startswith("lev"): lab = f"{v:.1f}x".replace(".", ",")
+        elif metric == "rp": lab = f"{v:,.0f}".replace(",", ".")
         elif abs(v) >= 1e6: lab = f"{v/1e6:.2f}M".replace(".", ",").replace(",00M", "M")
         else: lab = f"{v/1000:,.0f}k".replace(",", ".")
         g += f'<line x1="{ML}" x2="{W-MR}" y1="{y:.1f}" y2="{y:.1f}" class="grid"/><text x="{ML-6}" y="{y+3:.1f}" class="ax" text-anchor="end">{lab}</text>'
@@ -74,7 +75,14 @@ def rng(key, pad=0.0):
     return min(vs), max(vs)
 lg0, lg1 = rng("lev_global"); lc0, lc1 = rng("lev_cocos"); n0, n1 = rng("neto")
 leg = "".join(f'<span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="{c}" stroke-width="2" {"stroke-dasharray=%r" % d if d else ""}/></svg>{html.escape(l)}</span>'.replace("'", '"') for e, l, c, d in ST)
-cuerpo = bloque("Apalancamiento global (activos brutos / patrimonio neto, todas las fuentes)", "Cuánto pesa la deuda sobre el patrimonio total. 1,0x = sin deuda.", "lev_global", "lev_global", 1.0, round(lg1 + 0.1, 1))
+rpb = ""
+if all("rp_path" in R[s_] for s_ in R):
+    rv = [v for s_ in R for v in R[s_]["rp_path"]]
+    rpb = '<h3>Riesgo país supuesto (pb)</h3><p class="desc">Camino común hasta la elección (oct-2027) y salto al nivel de cada escenario. Base: BondTerminal 796 pb al 30/10/2026.</p><div class="grid3">'
+    for s_ in ("S1", "S2", "S3"):
+        rpb += panel(f"rp-{s_}", f'{s_} · {R[s_]["nombre"]}', [("RP", "Riesgo país", "var(--text)", "", R[s_]["rp_path"])], "rp", 0, round(max(rv) / 500 + 1) * 500)
+    rpb += "</div>"
+cuerpo = rpb + bloque("Apalancamiento global (activos brutos / patrimonio neto, todas las fuentes)", "Cuánto pesa la deuda sobre el patrimonio total. 1,0x = sin deuda.", "lev_global", "lev_global", 1.0, round(lg1 + 0.1, 1))
 cuerpo += bloque("Apalancamiento de la cuenta de Cocos (activos de Cocos / patrimonio neto de Cocos)", "Donde vive la caución. Sube cuando cae el precio de los bonos o no se repaga.", "lev_cocos", "lev_cocos", 1.0, round(lc1 + 0.2, 1))
 cuerpo += bloque("Patrimonio neto global valuado (USD)", "Incluye aportes, cupones, rendimiento de T-bills / fondo 60/40 y la valuación de los bonos en cada escenario.", "neto", "neto", 500000, round(n1 / 100000 + 1) * 100000)
 dif = '<h3>Costo de la protección: patrimonio neto vs. B (USD)</h3><p class="desc">Diferencia de patrimonio neto de A y A2 contra B (T-bills afuera). Mide cuánto se renuncia por repagar caución; B = 0.</p><div class="grid3">'
@@ -113,6 +121,20 @@ def tabla_riesgo():
         out += '</table>'
     return out
 
+def tabla_compara():
+    if not a.compara: return ""
+    C = json.load(open(a.compara))["resultados"]
+    t = '<h3>Efecto de la volatilidad preelectoral (previa a oct-2027)</h3><p class="desc">Compara el camino con riesgo país constante en ~796 pb contra el camino con volatilidad. Es común a los 3 escenarios hasta la elección.</p><table><tr><th>Estrategia</th><th colspan="2">Apal. Cocos máx. (nov-26 a sep-27)</th><th colspan="2">Neto Cocos mínimo</th><th colspan="2">Neto global mínimo</th></tr><tr><th></th><th>constante</th><th>volátil</th><th>constante</th><th>volátil</th><th>constante</th><th>volátil</th></tr>'
+    for e in ("A", "A2", "A4", "B"):
+        def met(RR):
+            rows = RR["S1"]["estrategias"][e][1:12]
+            return max((r["lev_cocos"] or 99) for r in rows), min(r["cocos_neto"] for r in rows), min(r["neto"] for r in rows)
+        c, v = met(C), met(R)
+        f = lambda x: str(round(x, 2)).replace(".", ",") + "x"
+        t += f'<tr><td>{e}</td><td class="n">{f(c[0])}</td><td class="n">{f(v[0])}</td><td class="n">{kes(c[1])}</td><td class="n">{kes(v[1])}</td><td class="n">{kes(c[2])}</td><td class="n">{kes(v[2])}</td></tr>'
+    ar_c, ar_v = C["S1"]["estrategias"]["A"][11]["ar"], R["S1"]["estrategias"]["A"][11]["ar"]
+    t += f'</table><p class="desc">Posición en bonos AR en sep-27: USD {kes(ar_c)} (constante) vs {kes(ar_v)} (volátil), una diferencia de {kes(ar_c-ar_v)}.</p>'
+    return t
 notas = open(a.notas).read() if a.notas else ""
 P = base["parametros"]
 page = f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proyección de largo plazo</title>
@@ -134,15 +156,15 @@ details{{margin-top:14px}}.foot{{color:var(--muted);font-size:12px;margin-top:18
 {notas}
 <div class="leg">{leg}</div>
 {cuerpo}
-<h3>Riesgo y retorno por estrategia</h3>{tabla_riesgo()}
+{tabla_compara()}<h3>Riesgo y retorno por estrategia</h3>{tabla_riesgo()}
 <details><summary>Ver tabla completa por hitos (vista de datos de los gráficos)</summary>{tabla_hitos()}</details>
-<p class="foot">Supuestos: riesgo país 796 pb hasta la elección (oct-27) y salta al nivel del escenario; TIR = UST + spread proporcional por bono; AO29 con cupón mensual 0,5% y flujos reales; resto de soberanos como bonos sintéticos con cupón semestral (ene/jul); notas de Cocos (70 mil, 3 notas) con cupones y capital al par; default (S3): cupones suspendidos desde dic-27 y bonos a valor {"implícito en el riesgo país" if P["recovery"] < 0 else str(int(P["recovery"]*100)) + "% del nominal"}; T-bills {P["tbill"]}%, caución {P["caucion_tasa"]}%, fondo USA 60/40 {P["ret_acc"]}% / {P["ret_rf"]}% (esperado, sin volatilidad), otros activos {P["ret_otros"]}%. Modelo de escenarios, no predicción; no es asesoramiento financiero.</p>
+<p class="foot">Supuestos: riesgo país previo a la elección según el camino mostrado (anclas mes:pb = {P.get("pre_path")}) y salto al nivel del escenario en oct-27; TIR = UST + spread proporcional por bono; AO29 con cupón mensual 0,5% y flujos reales; resto de soberanos como bonos sintéticos con cupón semestral (ene/jul); notas de Cocos (70 mil, 3 notas) con cupones y capital al par; default (S3): cupones suspendidos desde dic-27 y bonos a valor {"implícito en el riesgo país" if P["recovery"] < 0 else str(int(P["recovery"]*100)) + "% del nominal"}; T-bills {P["tbill"]}%, caución {P["caucion_tasa"]}%, fondo USA 60/40 {P["ret_acc"]}% / {P["ret_rf"]}% (esperado, sin volatilidad), otros activos {P["ret_otros"]}%. Modelo de escenarios, no predicción; no es asesoramiento financiero.</p>
 </main>
 <script>
 document.querySelectorAll('figure.panel').forEach(function(f){{
   var d=JSON.parse(f.querySelector('script').textContent),svg=f.querySelector('svg'),hit=f.querySelector('.hit'),cr=f.querySelector('.cross'),tip=f.querySelector('.tip');
   var n=d.s[0].v.length,MES=['nov-26','dic-26','ene-27','feb-27','mar-27','abr-27','may-27','jun-27','jul-27','ago-27','sep-27','oct-27','nov-27','dic-27','ene-28','feb-28','mar-28','abr-28','may-28','jun-28','jul-28','ago-28','sep-28','oct-28','nov-28','dic-28','ene-29','feb-29','mar-29','abr-29','may-29','jun-29','jul-29','ago-29','sep-29','oct-29'];
-  function f2(m,v){{if(v===null)return 'n/d (neto<0)';if(m.indexOf('lev')===0)return v.toFixed(2).replace('.',',')+'x';return 'USD '+Math.round(v/1000).toLocaleString('es-AR')+' mil';}}
+  function f2(m,v){{if(v===null)return 'n/d (neto<0)';if(m==='rp')return Math.round(v)+' pb';if(m.indexOf('lev')===0)return v.toFixed(2).replace('.',',')+'x';return 'USD '+Math.round(v/1000).toLocaleString('es-AR')+' mil';}}
   hit.addEventListener('mousemove',function(e){{var r=svg.getBoundingClientRect(),sc=r.width/svg.viewBox.baseVal.width,x=(e.clientX-r.left)/sc;var i=Math.max(0,Math.min(n-1,Math.round((x-d.ml)/d.iw*(n-1))));var px=d.ml+d.iw*i/(n-1);cr.setAttribute('x1',px);cr.setAttribute('x2',px);cr.style.display='';
     tip.innerHTML='<b>'+(i===0?'oct-26 (hoy)':MES[i-1])+'</b><br>'+d.s.map(function(s){{return '<span style="color:'+s.c+'">●</span> '+s.k+': '+f2(d.m,s.v[i]);}}).join('<br>');tip.style.display='';tip.style.left=Math.min(r.width-190,Math.max(4,px*sc+8))+'px';}});
   hit.addEventListener('mouseleave',function(){{cr.style.display='none';tip.style.display='none';}});

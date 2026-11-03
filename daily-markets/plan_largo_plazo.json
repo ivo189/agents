@@ -11,9 +11,9 @@
     "2028-02..2029-10": "3000/mes"
   },
   "escenarios": {
-    "S1": "Milei reelecto oct-2027, riesgo país 300 pb",
-    "S2": "Centro con riesgo, 1000 pb",
-    "S3": "Default/canje, 2000 pb, recupero 40% del nominal"
+    "S1": "Reelección de Milei (oct-2027): riesgo país salta a 300 pb",
+    "S2": "Alternativa de centro con riesgo: 1.000 pb",
+    "S3": "Reestructuración / canje (alternativa kirchnerista): 2.000 pb, cupones suspendidos desde dic-2027"
   },
   "estrategias": {
     "A": "todo flujo (aportes+cupones+vencimientos) repaga caución en Cocos hasta cerrarla; luego T-bills",
@@ -29,7 +29,13 @@
     "mes_eleccion": "2027-10",
     "mes_default": "2027-12",
     "ret_fondo_usa_6040_anual": "7% acciones / 4.5% renta fija (esperado)",
-    "caucion_gestion": "caución en USD"
+    "caucion_gestion": "caución en USD",
+    "pre_path_riesgo_pais": {
+      "constante": "0:795.7,11:795.7",
+      "volatil_pico_1100": "0:795.7,5:900,9:1050,11:1100",
+      "volatil_pico_1300": "0:795.7,5:950,9:1200,11:1300",
+      "nota": "camino común a los 3 escenarios hasta la elección (anclas mes:pb con interpolación lineal); en oct-2027 salta al nivel del escenario (--pre-path)"
+    }
   },
   "cupones": {
     "AO29": "mensual 0,5% (confirmado por Ivo)",

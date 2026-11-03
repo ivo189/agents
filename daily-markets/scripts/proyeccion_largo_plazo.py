@@ -19,6 +19,7 @@ ap.add_argument("--ret-acc", type=float, default=7.0)         # retorno esperado
 ap.add_argument("--ret-rf", type=float, default=4.5)          # retorno esperado renta fija USA (anual %)
 ap.add_argument("--eq-shock-dic27", type=float, default=0.0)  # shock de renta variable en dic-2027 (p.ej. -0.25)
 ap.add_argument("--election-m", type=int, default=12)
+ap.add_argument("--pre-path", default="0:795.7,11:795.7")    # riesgo pais previo a la eleccion: anclas "mes:pb" (interpolacion lineal), comun a los 3 escenarios
 ap.add_argument("--json", action="store_true")
 args = ap.parse_args()
 
@@ -74,13 +75,24 @@ def ahorro(m):
 def fecha(m):
     t = 10 + m; return f"{2026 + (t - 1) // 12}-{(t - 1) % 12 + 1:02d}"
 
-ESCENARIOS = {"S1": ("Milei reelecto (RP 300)", 300), "S2": ("Centro con riesgo (RP 1000)", 1000), "S3": ("Default/canje (RP 2000)", 2000)}
+ESCENARIOS = {"S1": ("Milei reelecto (RP 300)", 300), "S2": ("Centro con riesgo (RP 1000)", 1000), "S3": ("Reestructuración / canje (RP 2000)", 2000)}
 ESTRATEGIAS = ["A", "A2", "A4", "B"]
 r_fund = ((0.6 * (1 + args.ret_acc / 100) + 0.4 * (1 + args.ret_rf / 100))) ** (1 / 12) - 1   # 60/40 rebalanceado mensual aprox.
 
+def _anclas():
+    pts = sorted((int(a.split(":")[0]), float(a.split(":")[1])) for a in args.pre_path.split(","))
+    return pts
+PRE = _anclas()
+def rp_pre(m):
+    if m <= PRE[0][0]: return PRE[0][1]
+    for (m0, r0), (m1, r1) in zip(PRE, PRE[1:]):
+        if m <= m1: return r0 + (r1 - r0) * (m - m0) / (m1 - m0)
+    return PRE[-1][1]
+def rp_path(rp): return [round(rp_pre(m) if m < args.election_m else rp, 1) for m in range(37)]
+
 def valor_bono(k, m, rp, defaulted):
     p = POS[k]; T = p["T0"] - m / 12
-    spread = p["g"] if m < args.election_m else rp * p["g"] / RP0
+    spread = p["g"] * (rp_pre(m) / RP0 if m < args.election_m else rp / RP0)
     if defaulted:
         if args.recovery < 0:
             T14 = p["T0"] - DEFAULT_M / 12
@@ -136,7 +148,7 @@ def todo():
     out = {"parametros": {k: v for k, v in vars(args).items() if k != "json"},
            "calibracion": {k: {kk: round(vv, 3) for kk, vv in v.items()} for k, v in POS.items()}, "resultados": {}}
     for s, (nom, rp) in ESCENARIOS.items():
-        out["resultados"][s] = {"nombre": nom, "rp": rp, "estrategias": {e: correr(rp, e) for e in ESTRATEGIAS}}
+        out["resultados"][s] = {"nombre": nom, "rp": rp, "rp_path": rp_path(rp), "estrategias": {e: correr(rp, e) for e in ESTRATEGIAS}}
     return out
 
 if __name__ == "__main__":

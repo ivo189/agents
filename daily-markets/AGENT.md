@@ -183,6 +183,7 @@ Cada semana:
 4. Siempre decir: modelo de escenarios, no predicción; recupero tras default = precio implícito (caso base) y 40% (estrés); sin impuestos;
    no es asesoramiento financiero. El objetivo de Ivo es balancear riesgo y retorno: si no hay default, repagar caución cuesta rendimiento
    (B rinde más); si lo hay, repagar protege el patrimonio de Cocos. Mostrar ambos lados.
+Camino previo a la elección: `--pre-path "0:795.7,5:900,9:1050,11:1100"` (volátil, pico 1.100 pb en sep-27); por defecto constante en 796 pb. El informe `--compara const.json` muestra el efecto. S3 se llama "Reestructuración / canje".
 LIMITACIÓN: el estado inicial está fijo en 30-oct-2026; cuando pasen meses, regenerar con el estado actualizado (agregar `--estado`/`--inicio` al modelo).
 
 ## Formato del email (htmlBody, tablas simples, sin JS)
