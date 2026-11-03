@@ -93,9 +93,11 @@ def seccion(k):
         for sc in ("S1", "S2", "S3"):
             x += panel(f"{k}-{metric}-{sc}", f'{sc} · {RR[sc]["nombre"]}', [(e, l, c, d, sm(sc, e, key)) for e, l, c, d in ST], metric, ymin, ymax)
         return x + "</div>"
-    h = '<h3>Riesgo país supuesto (pb)</h3><p class="desc">Camino común hasta la elección (oct-2027) y desde ahí el de cada escenario. Base: BondTerminal 796 pb al 30/10/2026.</p><div class="grid3">'
+    h = '<h3>Riesgo país supuesto (pb)</h3><p class="desc">Tres caminos hasta la elección (oct-2027): 800 constante, pico de 1.000 o pico de 1.200 pb en sep-27; desde ahí, el camino de cada escenario. Base: BondTerminal 796 pb al 30/10/2026.</p><div class="leg"><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2"/></svg>previa 800 pb</span><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2" stroke-dasharray="7 4"/></svg>previa 1.000 pb</span><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2" stroke-dasharray="2 3"/></svg>previa 1.200 pb</span></div><div class="grid3">'
+    DASH = {"800": "", "1000": "7 4", "1200": "2 3"}
     for sc in ("S1", "S2", "S3"):
-        h += panel(f"{k}-rp-{sc}", f'{sc} · {RR[sc]["nombre"]}', [("RP", "Riesgo país", "var(--text)", "", RR[sc]["rp_path"])], "rp", 0, round(max(rv) / 500 + 1) * 500)
+        ser = [(kk, f"previa {kk}", "var(--text)", DASH.get(kk, ""), VARS[kk]["resultados"][sc]["rp_path"]) for kk in KEYS]
+        h += panel(f"{k}-rp-{sc}", f'{sc} · {RR[sc]["nombre"]}', ser, "rp", 0, round(max(rv) / 500 + 1) * 500, labels=False)
     h += "</div>"
     h += blk("Apalancamiento global (activos brutos / patrimonio neto, todas las fuentes)", "Cuánto pesa la deuda sobre el patrimonio total. 1,0x = sin deuda.", "lev_global", "lev_global", 1.0, round(lg1 + 0.1, 1))
     h += blk("Apalancamiento de la cuenta de Cocos (activos de Cocos / patrimonio neto de Cocos)", "Donde vive la caución. Sube cuando cae el precio de los bonos o no se repaga.", "lev_cocos", "lev_cocos", 1.0, round(lc1 + 0.2, 1))
