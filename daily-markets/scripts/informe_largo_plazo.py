@@ -125,22 +125,39 @@ def tabla_estres():
         t += f'<tr><td>{e}</td><td class="n">{kes(ESTR[k0]["S3"]["estrategias"][e][36]["neto"])}</td>' + "".join(f'<td class="n">{kes(min(r["cocos_neto"] for r in ESTR[k]["S3"]["estrategias"][e][1:36]))}</td>' for k in ESTR) + '</tr>'
     return t + '</table>'
 
-def valuacion_cocos():
+def valuacion_previa():
     NM = 18
-    h = '<h3>Efecto del camino previo en la valuación de la cartera de Cocos (USD)</h3><p class="desc">Bonos AR + notas + efectivo de Cocos, con la previa en 800, 1.000 o 1.200 pb. La diferencia aparece antes de la elección y desaparece en octubre de 2027, cuando el riesgo país salta al nivel del escenario.</p><div class="leg"><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2"/></svg>previa 800 pb</span><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2" stroke-dasharray="7 4"/></svg>previa 1.000 pb</span><span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2" stroke-dasharray="2 3"/></svg>previa 1.200 pb</span></div><div class="grid3">'
-    lo = min(r["cocos_neto"] + r["caucion"] for k in KEYS for sc in VARS[k]["resultados"].values() for r in sc["estrategias"]["A"][:NM + 1])
-    hi = max(r["cocos_neto"] + r["caucion"] for k in KEYS for sc in VARS[k]["resultados"].values() for r in sc["estrategias"]["A"][:NM + 1])
-    EST = {"800": ("800 pb", "1 0", ""), "1000": ("1.000 pb", "", "7 4"), "1200": ("1.200 pb", "", "2 3")}
-    for sc in ("S1", "S2", "S3"):
-        ser = []
-        for k in KEYS:
-            rows = VARS[k]["resultados"][sc]["estrategias"]["A"][:NM + 1]
-            ser.append((k, f"previa {EST.get(k, (k,))[0]}", "var(--text)", EST.get(k, ("", "", ""))[2], [r["cocos_neto"] + r["caucion"] for r in rows]))
-        h += panel(f"cv-{sc}", f'{sc} · {VARS[KEYS[0]]["resultados"][sc]["nombre"]}', ser, "cv", int(lo / 50000) * 50000, int(hi / 50000 + 1) * 50000, nmax=NM, labels=False)
-    return h + "</div>"
+    EST = {"800": ("800 pb", ""), "1000": ("1.000 pb", "7 4"), "1200": ("1.200 pb", "2 3")}
+    leg_ = '<div class="leg">' + "".join(f'<span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2" {"stroke-dasharray=%r" % d if d else ""}/></svg>previa {l}</span>'.replace("'", '"') for l, d in EST.values()) + '</div>'
+    metricas = [("cv", "Cartera de Cocos: bonos AR + notas + efectivo (USD)", "Valor de lo que está en Cocos, antes de restar la caución. No depende de la estrategia.", lambda r: r["cocos_neto"] + r["caucion"]),
+                ("tv", "Cartera total: activos de todas las fuentes (USD)", "Cocos + Citi + HSBC + IBKR + T-bills / fondo 60/40. Estrategia A2 como referencia; el efecto de la previa es el mismo en A y B.", lambda r: r["bruto"]),
+                ("nv", "Patrimonio neto total (USD)", "Activos totales menos la caución. Estrategia A2 como referencia.", lambda r: r["neto"])]
+    h = '<h3>Valuación proyectada hasta la elección: Cocos y total, según la previa de riesgo país</h3><p class="desc">Las tres previas (800, 1.000 y 1.200 pb) difieren hasta septiembre de 2027 y convergen en octubre, cuando el riesgo país salta al nivel de cada escenario. Después, cada escenario sigue su camino.</p>' + leg_
+    for met, titulo, desc, fn in metricas:
+        vals = [fn(r) for k in KEYS for sc in VARS[k]["resultados"].values() for r in sc["estrategias"]["A2"][:NM + 1]]
+        lo, hi = min(vals), max(vals)
+        h += f'<h3 style="font-size:14px;margin-top:18px">{titulo}</h3><p class="desc">{desc}</p><div class="grid3">'
+        for sc in ("S1", "S2", "S3"):
+            ser = [(k, f"previa {EST[k][0]}", "var(--text)", EST[k][1], [fn(r) for r in VARS[k]["resultados"][sc]["estrategias"]["A2"][:NM + 1]]) for k in KEYS]
+            h += panel(f"{met}-{sc}", f'{sc} · {VARS[KEYS[0]]["resultados"][sc]["nombre"]}', ser, "cv", int(lo / 50000) * 50000, int(hi / 50000 + 1) * 50000, nmax=NM, labels=False)
+        h += "</div>"
+    # tabla en sep-27 (pico de la previa) y oct-27
+    def val(k, m):
+        r = VARS[k]["resultados"]["S1"]["estrategias"]["A2"][m]
+        return {"cocos": r["cocos_neto"] + r["caucion"], "total": r["bruto"], "neto_cocos": r["cocos_neto"], "neto": r["neto"]}
+    t = '<h3 style="font-size:14px;margin-top:18px">Valuación en septiembre de 2027 (pico de la previa)</h3><table><tr><th rowspan="2">Previa</th>' + "".join(f'<th colspan="2">{x}</th>' for x in ("Cartera de Cocos", "Cartera total", "Neto de Cocos", "Neto total")) + '</tr><tr>' + '<th>USD</th><th>vs 800</th>' * 4 + '</tr>'
+    b0 = val(KEYS[0], 11)
+    for k in KEYS:
+        v = val(k, 11)
+        cells = ""
+        for key in ("cocos", "total", "neto_cocos", "neto"):
+            d = v[key] - b0[key]
+            cells += f'<td class="n">{kes(v[key])}</td><td class="n">{"–" if k == KEYS[0] else (kes(d) + " (" + f"{100*d/b0[key]:.1f}%".replace(".", ",") + ")")}</td>'
+        t += f'<tr><td>{EST.get(k, (k,))[0]}</td>{cells}</tr>'
+    return h + t + '</table><p class="desc">En octubre de 2027, con la elección, las tres previas valen exactamente lo mismo. Referencia: estrategia A2; en A y B el efecto en USD es idéntico.</p>'
 
 tabs = ""
-secs = f'<section class="var" id="v-{KEYS[0]}">{seccion(KEYS[0])}</section>' + valuacion_cocos()
+secs = f'<section class="var" id="v-{KEYS[0]}">{seccion(KEYS[0])}</section>' + valuacion_previa()
 notas = open(a.notas).read() if a.notas else ""
 P = base["parametros"]
 page = f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proyección de largo plazo</title>
