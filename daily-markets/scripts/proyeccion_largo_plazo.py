@@ -20,6 +20,9 @@ ap.add_argument("--ret-rf", type=float, default=4.5)          # retorno esperado
 ap.add_argument("--eq-shock-dic27", type=float, default=0.0)  # shock de renta variable en dic-2027 (p.ej. -0.25)
 ap.add_argument("--election-m", type=int, default=12)
 ap.add_argument("--pre-path", default="0:795.7,11:795.7")    # riesgo pais previo a la eleccion: anclas "mes:pb" (interpolacion lineal), comun a los 3 escenarios
+ap.add_argument("--s2-peak", type=float, default=1600)   # S2: riesgo pais tras la eleccion (shock)
+ap.add_argument("--s2-hold", type=int, default=6)        # S2: meses que se mantiene el pico
+ap.add_argument("--s2-end", type=float, default=900)     # S2: riesgo pais a oct-2029 (normalizacion lineal desde el pico)
 ap.add_argument("--json", action="store_true")
 args = ap.parse_args()
 
@@ -75,7 +78,11 @@ def ahorro(m):
 def fecha(m):
     t = 10 + m; return f"{2026 + (t - 1) // 12}-{(t - 1) % 12 + 1:02d}"
 
-ESCENARIOS = {"S1": ("Milei reelecto (RP 300)", 300), "S2": ("Centro con riesgo (RP 1000)", 1000), "S3": ("Reestructuración / canje (RP 2000)", 2000)}
+def escenarios():
+    e = args.election_m
+    return {"S1": {"nombre": "Milei reelecto (RP 300)", "post": [(e, 300)], "default": False},
+            "S2": {"nombre": f"Oposición que paga, shock post-elección (RP {int(args.s2_peak)})", "post": [(e, args.s2_peak), (e + args.s2_hold, args.s2_peak), (36, args.s2_end)], "default": False},
+            "S3": {"nombre": "Reestructuración / canje (RP 2000)", "post": [(e, 2000)], "default": True}}
 ESTRATEGIAS = ["A", "A2", "A4", "B"]
 r_fund = ((0.6 * (1 + args.ret_acc / 100) + 0.4 * (1 + args.ret_rf / 100))) ** (1 / 12) - 1   # 60/40 rebalanceado mensual aprox.
 
@@ -90,27 +97,35 @@ def rp_pre(m):
     return PRE[-1][1]
 def rp_path(rp): return [round(rp_pre(m) if m < args.election_m else rp, 1) for m in range(37)]
 
-def valor_bono(k, m, rp, defaulted):
+def rp_t(m, scn):
+    if m < args.election_m: return rp_pre(m)
+    pts = scn["post"]
+    if m <= pts[0][0]: return pts[0][1]
+    for (m0, r0), (m1, r1) in zip(pts, pts[1:]):
+        if m <= m1: return r0 + (r1 - r0) * (m - m0) / (m1 - m0) if m1 > m0 else r1
+    return pts[-1][1]
+
+def valor_bono(k, m, scn, defaulted):
     p = POS[k]; T = p["T0"] - m / 12
-    spread = p["g"] * (rp_pre(m) / RP0 if m < args.election_m else rp / RP0)
     if defaulted:
         if args.recovery < 0:
             T14 = p["T0"] - DEFAULT_M / 12
-            px = price(UST(max(T14, 0.01)) + rp * p["g"] / RP0 / 100, p["c"], T14)
+            px = price(UST(max(T14, 0.01)) + rp_t(DEFAULT_M, scn) * p["g"] / RP0 / 100, p["c"], T14)
         else: px = args.recovery * 100
-    else: px = price(UST(max(T, 0.01)) + spread / 100, p["c"], T) if T > 0 else 100.0
+    else:
+        px = price(UST(max(T, 0.01)) + rp_t(m, scn) * p["g"] / RP0 / 100, p["c"], T) if T > 0 else 100.0
     return p["face"] * px / 100
 
-def correr(rp, est):
+def correr(scn, est):
     caucion, tbills, fund = CAUCION0, 0.0, 0.0
     no_cocos = NO_COCOS; vendidos = set(); rows = []
     for m in range(0, 37):
-        defaulted = rp >= 2000 and m >= DEFAULT_M
+        defaulted = scn["default"] and m >= DEFAULT_M
         if m > 0: no_cocos *= (1 + args.ret_otros / 100) ** (1 / 12)
         ar = 0.0; cup = 0.0; venc = 0.0; venta = 0.0; venc_ao = 0.0
         for k, p in POS.items():
             if k in vendidos: continue
-            val = valor_bono(k, m, rp, defaulted)
+            val = valor_bono(k, m, scn, defaulted)
             if est == "A4" and m == 1 and k in LARGOS:
                 venta += val; vendidos.add(k); continue
             if m > 0 and not defaulted:
@@ -147,8 +162,9 @@ def correr(rp, est):
 def todo():
     out = {"parametros": {k: v for k, v in vars(args).items() if k != "json"},
            "calibracion": {k: {kk: round(vv, 3) for kk, vv in v.items()} for k, v in POS.items()}, "resultados": {}}
-    for s, (nom, rp) in ESCENARIOS.items():
-        out["resultados"][s] = {"nombre": nom, "rp": rp, "rp_path": rp_path(rp), "estrategias": {e: correr(rp, e) for e in ESTRATEGIAS}}
+    for s, scn in escenarios().items():
+        out["resultados"][s] = {"nombre": scn["nombre"], "rp_path": [round(rp_t(m, scn), 1) for m in range(37)],
+                                "estrategias": {e: correr(scn, e) for e in ESTRATEGIAS}}
     return out
 
 if __name__ == "__main__":
