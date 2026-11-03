@@ -1,5 +1,5 @@
 {
-  "_nota": "Supuestos del plan a largo plazo (modelo scripts/proyeccion_largo_plazo.py). Editables por Ivo.",
+  "_nota": "Supuestos del plan a largo plazo (scripts/proyeccion_largo_plazo.py v2). Editables por Ivo.",
   "aportes_usd": {
     "2026-11": 15000,
     "2026-12": 15000,
@@ -16,15 +16,31 @@
     "S3": "Default/canje, 2000 pb, recupero 40% del nominal"
   },
   "estrategias": {
-    "A": "todo flujo repaga caución en Cocos hasta cerrarla; luego T-bills",
+    "A": "todo flujo (aportes+cupones+vencimientos) repaga caución en Cocos hasta cerrarla; luego T-bills",
+    "A2": "mitad del aporte fresco repaga caución y mitad va a fondo USA 60/40; todos los cupones y vencimientos repagan caución; luego al 60/40",
+    "A4": "A2 + vender hoy los bonos largos (AL35, AE38, AL41, GD46, GD29) y repagar caución con el producto",
     "B": "todo flujo a T-bills afuera; caución se mantiene y se cancela al vencer el AO29"
   },
   "parametros": {
     "tbill_tna": 4.1,
     "caucion_tna": 0.5,
     "ret_otros_anual": 0,
-    "recupero_default": 0.4,
+    "recupero_default": "precio implícito en el riesgo país (--recovery -1); estrés 0.40",
     "mes_eleccion": "2027-10",
-    "mes_default": "2027-12"
+    "mes_default": "2027-12",
+    "ret_fondo_usa_6040_anual": "7% acciones / 4.5% renta fija (esperado)",
+    "caucion_gestion": "caución en USD"
+  },
+  "cupones": {
+    "AO29": "mensual 0,5% (confirmado por Ivo)",
+    "otros_bonos": "semestral, enero y julio (confirmado por Ivo)",
+    "notas_cocos": "70.000 en 3 notas (supuesto: MSFT/ORCL 10k, MELI/NU 30k, BBD/MELI/NU 30k); cupones por term sheet y capital al par a vencimiento; sin autocall ni barrera quebrada; confirmar composición"
+  },
+  "pestana_sheet": {
+    "spreadsheet_id": "1Cf2ia_4LHchQl2a2aNR1aiCQei3rPkBfTqQr5Xpc6Qg",
+    "hoja": "Proyección LP",
+    "gid": 777,
+    "script": "scripts/proyeccion_a_sheet.py",
+    "graficos": "10 gráficos nativos (apal. global, apal. Cocos, neto por escenario; posición AR)"
   }
 }

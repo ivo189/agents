@@ -163,12 +163,27 @@ la planilla es la memoria entre semanas.
    una sola fila, decir que la serie recién empieza. El gráfico de líneas vive en la planilla (celda O1); no se embebe en el mail.
 5. Los datos históricos no se reescriben: si un dato viejo estaba mal, agregar una nota en M, no borrar la fila.
 
-## Parte 7 – Plan a largo plazo (bajo demanda)
-No va en el reporte semanal salvo que Ivo lo pida. Modelo: `scripts/proyeccion_largo_plazo.py` (supuestos en `plan_largo_plazo.json`):
-3 escenarios de riesgo país (300 / 1000 / 2000 pb con default) × 2 estrategias (A repagar caución en Cocos, B T-bills afuera),
-mensual hasta oct-2029. Reportar neto global, apalancamiento global y de Cocos, caución y AR/neto en los hitos (mar-27, oct-27,
-dic-27, dic-28, oct-29), y SIEMPRE el patrimonio neto de Cocos en el escenario 3 (puede quedar negativo en B). Aclarar las
-simplificaciones (bonos sintéticos salvo AO29, shock instantáneo, sin impuestos). No es asesoramiento financiero.
+## Parte 7 – Proyección de largo plazo (semanal)
+Modelo `scripts/proyeccion_largo_plazo.py` (supuestos en `plan_largo_plazo.json`, anclado al estado del 30-oct-2026): 3 escenarios de
+riesgo país (300 / 1000 / 2000 pb con default) x estrategias A, A2 (50% repago + 50% USA 60/40; cupones y vencimientos repagan caución),
+A4 (A2 + vender bonos largos) y B (T-bills afuera), mensual hasta oct-2029. Cupones: AO29 mensual 0,5%; resto de soberanos semestral
+(ene/jul); notas de Cocos (70.000 en 3 notas) por term sheet. Las gráficas viven en la pestaña "Proyección LP" del Google Sheet de
+apalancamiento (id en `fuentes.json` -> `serie_apalancamiento`; gid 777), con 10 gráficos nativos que se actualizan solos al reescribir los datos.
+Cada semana:
+1. Leer de la pestaña la fila del mes en curso (`get_values` de `'Proyección LP'!A:AK`) y comparar el apalancamiento global, el de Cocos y el
+   patrimonio neto REALES (Parte 0/3/6) contra A, A2 y B de cada escenario: "real vs proyectado" y a qué estrategia se parece el camino real.
+2. En el email, sección "Proyección de largo plazo": tabla de hitos (oct-27, dic-27, oct-29) por escenario y estrategia (neto, apalancamiento
+   global y de Cocos), tabla de riesgo-retorno (neto final en S1/S2/S3, apalancamiento de Cocos máximo y neto de Cocos mínimo tras la elección,
+   estrés con recupero 40%), el costo de la protección (A, A2 vs B) y el link a la pestaña con las gráficas
+   (https://docs.google.com/spreadsheets/d/1Cf2ia_4LHchQl2a2aNR1aiCQei3rPkBfTqQr5Xpc6Qg/edit#gid=777). No pegar gráficos en el mail (se pierden).
+3. Reproducir/refrescar: `python3 -I scripts/proyeccion_largo_plazo.py --json > base.json` y, si cambió algún supuesto (aportes, tasas,
+   caución, composición de notas, bonos) o el estado real se desvía > 5% del camino proyectado, correr `scripts/proyeccion_a_sheet.py base.json`
+   y reescribir la pestaña con `update_formulas` (el rango y el formato salen del script; los gráficos no se tocan). Informe HTML interactivo
+   completo: `scripts/informe_largo_plazo.py --base base.json --estres r40.json --out informe.html` (a pedido de Ivo; no adjuntar por tamaño).
+4. Siempre decir: modelo de escenarios, no predicción; recupero tras default = precio implícito (caso base) y 40% (estrés); sin impuestos;
+   no es asesoramiento financiero. El objetivo de Ivo es balancear riesgo y retorno: si no hay default, repagar caución cuesta rendimiento
+   (B rinde más); si lo hay, repagar protege el patrimonio de Cocos. Mostrar ambos lados.
+LIMITACIÓN: el estado inicial está fijo en 30-oct-2026; cuando pasen meses, regenerar con el estado actualizado (agregar `--estado`/`--inicio` al modelo).
 
 ## Formato del email (htmlBody, tablas simples, sin JS)
 1. Titular: 2-3 líneas con lo más importante.
@@ -177,6 +192,7 @@ simplificaciones (bonos sintéticos salvo AO29, shock instantáneo, sin impuesto
 4. Cartera Cocos: pesos, TIR/duration ponderada, concentración, antigüedad del dato.
 4b. Dónde alocar futuros ahorros (Parte 5).
 4c. Serie de apalancamiento (Parte 6): tabla de 12 semanas + link a la planilla.
+4d. Proyección de largo plazo (Parte 7): real vs proyectado, riesgo-retorno, link a las gráficas.
 5. Fuentes y calidad de datos (qué fue web vs conector, qué faltó).
 Enviá con `mcp__Gmail__send_message`. Si el envío falla, creá un draft con `create_draft`.
 Si es feriado en AR y US, mandá un mail corto avisando que no hay datos nuevos.
