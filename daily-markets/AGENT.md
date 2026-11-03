@@ -185,6 +185,7 @@ Cada semana:
    (B rinde más); si lo hay, repagar protege el patrimonio de Cocos. Mostrar ambos lados.
 Camino previo a la elección: `--pre-path "0:795.7,5:900,9:1050,11:1100"` (volátil, pico 1.100 pb en sep-27); por defecto constante en 796 pb. El informe `--compara const.json` muestra el efecto. S3 se llama "Reestructuración / canje".
 Escenarios: S1 Milei reelecto (300 pb); S2 oposición que paga con shock post-elección a 1.600 pb por 6 meses y baja a 900 pb en oct-2029; S3 reestructuración/canje (2.000 pb). Camino previo a la elección (`--pre-path`, ver plan_largo_plazo.json): 800 constante, pico 1.000 o pico 1.200 pb en sep-27. Informe: `informe_largo_plazo.py --var 800=a.json --var 1000=b.json --var 1200=c.json [--estres 800=x.json ...] --out informe.html` (pestañas por camino previo).
+Retorno esperado de lo que no es Cocos (Citi, HSBC, IBKR): 6% anual (decisión de Ivo, igual al 60/40); T-bills 4,1%; caución 0,5%.
 LIMITACIÓN: el estado inicial está fijo en 30-oct-2026; cuando pasen meses, regenerar con el estado actualizado (agregar `--estado`/`--inicio` al modelo).
 
 ## Formato del email (htmlBody, tablas simples, sin JS)

@@ -5,14 +5,14 @@ Estrategias:
   A2 : mitad del aporte fresco repaga caucion y mitad va a un fondo USA 60/40; TODOS los cupones/vencimientos repagan caucion.
   A4 : como A2, pero ademas vende hoy los bonos largos (AL35, AE38, AL41, GD46, GD29) y usa el producto para repagar caucion.
   B  : todo flujo a T-bills afuera; la caucion se mantiene y solo se cancela al vencer el AO29 (colateral).
-Uso: python proyeccion_largo_plazo.py [--json] [--recovery -1|0.40] [--ret-otros 0] [--caucion-tasa 0.5] [--tbill 4.1]
+Uso: python proyeccion_largo_plazo.py [--json] [--recovery -1|0.40] [--ret-otros 6] [--caucion-tasa 0.5] [--tbill 4.1]
      [--ret-acc 7] [--ret-rf 4.5] [--eq-shock-dic27 0]
 Cupones: AO29 mensual 0,5%; resto semestral (ene/jul); notas de Cocos (70.000 en 3 notas) segun term sheets, capital al par a vencimiento."""
 import json, argparse
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--recovery", type=float, default=-1)         # -1 = precio implicito en el riesgo pais del escenario; 0.40 = estres
-ap.add_argument("--ret-otros", type=float, default=0.0)       # retorno anual de activos no-AR existentes
+ap.add_argument("--ret-otros", type=float, default=6.0)       # retorno anual esperado de lo que no es Cocos (Citi, HSBC, IBKR); 6% = igual al 60/40
 ap.add_argument("--caucion-tasa", type=float, default=0.5)
 ap.add_argument("--tbill", type=float, default=4.1)
 ap.add_argument("--ret-acc", type=float, default=7.0)         # retorno esperado renta variable USA (anual %)

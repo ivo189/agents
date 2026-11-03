@@ -24,7 +24,7 @@
   "parametros": {
     "tbill_tna": 4.1,
     "caucion_tna": 0.5,
-    "ret_otros_anual": 0,
+    "ret_otros_anual": 6.0,
     "recupero_default": "precio implícito en el riesgo país (--recovery -1); estrés 0.40",
     "mes_eleccion": "2027-10",
     "mes_default": "2027-12",
@@ -35,7 +35,8 @@
       "1000": "0:795.7,5:880,9:960,11:1000",
       "1200": "0:795.7,5:950,9:1100,11:1200",
       "nota": "camino común a los 3 escenarios hasta la elección; en oct-2027 salta al nivel del escenario (--pre-path)"
-    }
+    },
+    "ret_otros_nota": "Ivo (3-nov-2026): considerar 6% anual para lo que no es Cocos (Citi, HSBC, IBKR, MXN)"
   },
   "cupones": {
     "AO29": "mensual 0,5% (confirmado por Ivo)",
