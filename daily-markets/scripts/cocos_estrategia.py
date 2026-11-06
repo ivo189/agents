@@ -62,7 +62,8 @@ def regla_venta(rp_obj=600, frac=1.0, rp_hoy=RP_HOY):
     ar1 = ar0 - prod; tot1 = G1 + NOCOCOS0
     return {"rp_obj": rp_obj, "frac": frac, "ganancia_largos": round(sum(val[k] - VAL[k] for k in LARGOS)), "producido": round(prod), "lev_antes": round(G0 / N, 2), "lev_despues": round(G1 / (G1 - C1), 2),
             "caucion_despues": round(C1), "firepower_2x_despues": round(max(2 * (G1 - C1) - G1, 0)), "ar_pct_neto_antes": round(100 * ar0 / (G0 + NOCOCOS0 - CAUC0), 1), "ar_pct_neto_despues": round(100 * ar1 / (tot1 - C1), 1)}
-out["regla_venta"] = [regla_venta(rp, f) for rp in (700, 600) for f in (0.5, 1.0)]
+ESCALA = ((600, 0.25), (500, 0.50), (400, 1.0))   # acumulado sobre los largos de hoy
+out["regla_venta"] = [regla_venta(rp, f) for rp, f in ESCALA]
 def run(): return out
 if __name__ == "__main__":
     if a.json: print(json.dumps(out, ensure_ascii=False))
