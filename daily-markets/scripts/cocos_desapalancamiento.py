@@ -11,7 +11,7 @@ import json, argparse
 ap = argparse.ArgumentParser()
 ap.add_argument("--gap", type=float, default=5.5)        # % neto de captura al canjear cable->MEP: ~6% bruto (AL30C/AL30D) menos ~0,5 de spread; Cocos no cobra comisión por el canje (Ivo, 6-nov-26)
 ap.add_argument("--ao27-tir", type=float, default=4.09)  # TIR MEP AO27 (BondTerminal 6-nov-26)
-ap.add_argument("--on-tir", type=float, default=7.0)     # supuesto
+ap.add_argument("--on-tir", type=float, default=4.6)     # TIR MEP de ON Pampa corta (MGCN 4,57% / MGCT 4,61%), ver scripts/on_pampa.py
 ap.add_argument("--caucion-tasa", type=float, default=0.5)
 ap.add_argument("--json", action="store_true")
 a = ap.parse_args()
@@ -32,9 +32,9 @@ def cupones(m):
     if m % 6 == 3: c += 5000                             # resto de soberanos, ene/jul (aprox.)
     return c
 LAB = lambda m: ["oct-26", "nov-26", "dic-26", "ene-27", "feb-27", "mar-27", "abr-27", "may-27", "jun-27", "jul-27", "ago-27", "sep-27", "oct-27", "nov-27", "dic-27"][m]
-OPC = {"A0": ("Repagar directo (sin canje)", 0.0, 0.0), "A1": ("Canjear y repagar", a.gap, 0.0), "B1": ("Canjear y comprar AO27", a.gap, 1.0), "B2": ("Canjear y comprar ON corta (supuesto)", a.gap, 1.0), "M": ("Mixta 50/50: repagar y AO27", a.gap, 0.5)}
+OPC = {"A0": ("Repagar directo (sin canje)", 0.0, 0.0), "A1": ("Canjear y repagar", a.gap, 0.0), "B1": ("Canjear y comprar AO27", a.gap, 1.0), "B2": ("Canjear y comprar ON Pampa corta (MGCN/MGCT)", a.gap, 1.0), "M": ("Mixta 50/50: repagar y AO27", a.gap, 0.5)}
 YLD = {"B1": a.ao27_tir, "B2": a.on_tir, "M": a.ao27_tir}
-DURB = {"B1": 0.92, "B2": 1.5, "M": 0.92}
+DURB = {"B1": 0.92, "B2": 2.0, "M": 0.92}
 
 def correr(op, shock_bp=0, shock_m=3, horizonte=14):
     nombre, g, share_buy = OPC[op]; y = YLD.get(op, 0)
@@ -61,6 +61,8 @@ IOL = {"AL30": (51.51, 48.60, 7468105, 7629486), "GD30": (53.07, 50.00, 68937, 7
        "AO27": (102.15, 96.35, 218311, 66477), "AO29": (76.99, 72.90, 106156, 25226)}
 
 def extras():
+    import importlib.util as _u, os
+    _sp = _u.spec_from_file_location("on_pampa", os.path.join(os.path.dirname(os.path.abspath(__file__)), "on_pampa.py")); _m = _u.module_from_spec(_sp); _sp.loader.exec_module(_m)
     T, g = 0.98, a.gap / 100
     brecha = {k: {"gap_pct": round(100 * (pd / pc - 1), 2), "monto_D": v[2], "monto_C": v[3]} for k, v in IOL.items() for pd, pc in [(v[0], v[1])]}
     comp = {"tbill_afuera": round(100 * 1.041 ** T, 1), "ao27_canje_queda_local": round(100 * (1 + g) * (1 + a.ao27_tir / 100) ** T, 1),
@@ -75,7 +77,7 @@ def extras():
     G = AR0 + NOTAS0 + OTROS; puente = []
     for X in (0, 40000, 60000, 87000, 128000):
         D = CAUC0 - X; puente.append({"X": X, "lev": round(G / (G - D), 2), "bp_3x": round((G - 1.5 * D) / (AR0 * DUR) * 10000)})
-    return {"brecha": brecha, "comparacion_100": comp, "meses_expuestos": meses, "puente": puente}
+    return {"on_pampa": _m.datos(), "brecha": brecha, "comparacion_100": comp, "meses_expuestos": meses, "puente": puente}
 
 def main():
     G0 = AR0 + NOTAS0 + OTROS; N0 = G0 - CAUC0; L0 = G0 / N0

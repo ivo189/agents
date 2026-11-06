@@ -55,6 +55,16 @@ tr_html = ('<h3>3b. El tramo más expuesto es noviembre a enero</h3>'
   '<p class="desc">Como dijiste que podés usar los ETFs de Citi o la cuenta de HSBC si cambia la necesidad de liquidez, una opción es mover capital a Cocos ahora para repagar caución y reponerlo con los aportes de enero en adelante. No es una recomendación: tiene costo de venta de los ETFs y posibles impuestos.</p>'
   '<table><tr><th>Capital movido hoy</th><th>Apalancamiento resultante</th><th>Suba del riesgo país que lleva a 3x</th></tr>' +
   "".join('<tr><td class="n">%s</td><td class="n">%s</td><td class="n">+%d pb</td></tr>' % (kes(r["X"]), x(r["lev"]), r["bp_3x"]) for r in X_["puente"]) + '</table>')
+# --- ONs reales
+on_rows = ""
+for t, r in X_["on_pampa"].items():
+    cab = r.get("cable") or r.get("cable_est")
+    est = "" if r.get("cable") else "*"
+    on_rows += '<tr><td>%s</td><td>%s</td><td class="n">%s %%</td><td>%s</td><td class="n">%s</td><td class="n">%s</td><td class="n">%s %%</td><td class="n">%s %%%s</td><td class="n">%s</td><td class="n">%s</td></tr>' % (
+        t, r["vencimiento"][:7], str(r["cupon_pct"]).replace(".", ","), r["ley"], str(r["precio_D"]).replace(".", ","), (str(r["precio_C"]).replace(".", ",") if r["precio_C"] else "–"),
+        str(r["mep"]["ytm_pct"]).replace(".", ","), str(cab["ytm_pct"]).replace(".", ","), est, str(r["mep"]["mod_dur"]).replace(".", ","), "USD " + format(r["monto_operado_D_usd"], ",").replace(",", "."))
+on_t = ('<table><tr><th>ON Pampa</th><th>Vence</th><th>Cupón</th><th>Ley</th><th>Precio MEP</th><th>Precio cable</th><th>TIR MEP</th><th>TIR cable</th><th>Duration</th><th>Operado por día (MEP)</th></tr>' + on_rows + '</table>'
+  '<p class="desc">TIR calculada con cupones semestrales y capital al vencimiento (supuesto: sin amortizaciones antes), precios de IOL del 6/11. * Sin cotización en cable: estimada con la brecha promedio. El <b>current yield</b> que viste en la captura (7,1 %, 5,6 %, 5,4 %) sobreestima el rendimiento de las que cotizan sobre la par: la MGCQ, p. ej., tiene un CY de 6,7 % en MEP pero una TIR de 2,6 %.</p>')
 inflow = 15000 * 2 + 80000 + 20000 * 2 + 6000 * 9
 page = f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cocos: plan de desapalancamiento</title>
 <style>:root{{--bg:#fcfcfb;--text:#0b0b0b;--muted:#52514e;--grid:#e6e5e1;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--card:#fff;--line:#d6d5d0}}
@@ -81,14 +91,14 @@ table{{border-collapse:collapse;font-size:12px;margin:8px 0;display:block;overfl
 <h3>5. Activos de bajo riesgo para la opción B</h3>
 <table><tr><th>Activo</th><th>Precio MEP</th><th>TIR MEP</th><th>TIR en cable (con la brecha)</th><th>Duration</th><th>Comentario</th></tr>
 <tr><td>AO27</td><td class="n">101,87</td><td class="n">4,09 %</td><td class="n">10,44 %</td><td class="n">0,92</td><td style="text-align:left">En MEP rinde lo mismo que un T-bill (4,1 %); con el canje y quedándose en Argentina, ~9 % hasta octubre de 2027. Opera poco y vence junto a la elección.</td></tr>
-<tr><td>ON corta (Pampa Energía u otra)</td><td colspan="5" style="text-align:left">Sin datos: el listado de IOL no trae TIR ni duration de las ON. Usé un supuesto de 7 % y duration 1,5. Pasame los tickers y el precio de cada una y reemplazo el supuesto.</td></tr>
-<tr><td>AO29 (lo que ya tenés)</td><td class="n">76,68</td><td class="n">16,47 %</td><td class="n">18,84 %</td><td class="n">2,47</td><td style="text-align:left">Cayó mucho, pero es lo que originó el sobregiro. Comprar más aumenta la concentración.</td></tr></table>
+<tr><td>ON Pampa corta (MGCN / MGCT)</td><td class="n">102,2 / 102,0</td><td class="n">4,6 %</td><td class="n">7,3–7,7 %</td><td class="n">1,8 / 2,2</td><td style="text-align:left">TIR en MEP igual a AO27 y T-bill. Detalle abajo: opera entre USD 500 y 10 mil por día.</td></tr>
+<tr><td>AO29 (lo que ya tenés)</td><td class="n">76,68</td><td class="n">16,47 %</td><td class="n">18,84 %</td><td class="n">2,47</td><td style="text-align:left">Cayó mucho, pero es lo que originó el sobregiro. Comprar más aumenta la concentración.</td></tr></table>{on_t}
 <h3>6. Lectura preliminar (marco, no asesoramiento financiero)</h3>
-<ul><li><b>Primero repagar, después invertir.</b> Hasta bajar a ~2,0x, repagar es 2x más eficiente que comprar y el único camino que llega a 1,5x durante 2027. Con tu calendario, repagar llega a 2,0x en enero y a 1,5x hacia junio; comprar AO27 u ON llega a 2,0x en marzo y a 1,8x recién en diciembre.</li>
+<ul><li><b>Las ON cortas de Pampa no mejoran el rendimiento:</b> en MEP rinden 4,6 % (MGCN y MGCT) y 2,6 % la MGCQ, igual o menos que el AO27 y el T-bill, y operan entre USD 500 y 10 mil por día. Comprar USD 80 mil no es posible sin mover el precio.</li><li><b>Primero repagar, después invertir.</b> Hasta bajar a ~2,0x, repagar es 2x más eficiente que comprar y el único camino que llega a 1,5x durante 2027. Con tu calendario, repagar llega a 2,0x en enero y a 1,5x hacia junio; comprar AO27 u ON llega a 2,0x en marzo y a 1,8x recién en diciembre.</li>
 <li><b>El canje de la brecha conviene en ambos casos:</b> es independiente de la opción. Si la brecha se achica, mejor canjear antes que después, siempre que las reglas de Cocos lo permitan.</li>
 <li><b>Una vez bajo 2,0x</b> tiene sentido analizar la opción B para lo que sobre, o la mixta, porque ahí ya hay colchón.</li>
 <li><b>AO27 vs T-bill:</b> con el canje y sin repatriar, el AO27 le gana al T-bill, pero la ventaja viene del canje, que también capturás repagando caución. Lo propio del AO27 es la tasa (4,1 % contra 0,5 % de la caución) a cambio de riesgo argentino, poca liquidez y más apalancamiento.</li></ul>
 <h3>Lo que necesito saber para afinar el modelo</h3>
-<ul><li>Reglas de margen de Cocos: umbral de llamado, haircut por activo (bonos, ON, AO27) y si la caución se renueva sola.</li><li>Comisión real de Cocos por el canje y si hay restricción cruzada (días de espera) o impuestos.</li><li>Tickers y precios de las ON de Pampa Energía que mirás.</li></ul>
+<ul><li>Reglas de margen de Cocos: umbral de llamado, haircut por activo (bonos, ON, AO27) y si la caución se renueva sola.</li><li>Comisión real de Cocos por el canje y si hay restricción cruzada (días de espera) o impuestos.</li><li>Si los tickers C (cable) pagan cupones y capital en dólares cable: de eso depende si comprar la ON o el AO27 en cable evita volver a canjear.</li></ul>
 <p class="desc">Modelo de escenarios con precios constantes y shock lineal por duration; no es asesoramiento financiero.</p></main></body></html>'''
 open(sys.argv[2], "w").write(page); print("ok", len(page))
