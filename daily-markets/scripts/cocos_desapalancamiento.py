@@ -9,7 +9,7 @@ Opciones por mes (nov-26 a dic-27) con el calendario de aportes de Ivo:
 Uso: python cocos_desapalancamiento.py [--json] [--gap 5.0] [--on-tir 7.0] [--ao27-tir 4.09]"""
 import json, argparse
 ap = argparse.ArgumentParser()
-ap.add_argument("--gap", type=float, default=5.0)        # % neto de captura al canjear cable->MEP (BondTerminal muestra ~5,9% bruto)
+ap.add_argument("--gap", type=float, default=5.5)        # % neto de captura al canjear cable->MEP: ~6% bruto (AL30C/AL30D) menos ~0,5 de spread; Cocos no cobra comisión por el canje (Ivo, 6-nov-26)
 ap.add_argument("--ao27-tir", type=float, default=4.09)  # TIR MEP AO27 (BondTerminal 6-nov-26)
 ap.add_argument("--on-tir", type=float, default=7.0)     # supuesto
 ap.add_argument("--caucion-tasa", type=float, default=0.5)
