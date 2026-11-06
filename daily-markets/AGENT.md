@@ -189,6 +189,13 @@ Escenarios: S1 Milei reelecto (300 pb); S2 oposición que paga con shock post-el
 Retorno esperado de lo que no es Cocos (Citi, HSBC, IBKR): 6% anual (decisión de Ivo, igual al 60/40); T-bills 4,1%; caución 0,5%.
 LIMITACIÓN: el estado inicial está fijo en 30-oct-2026; cuando pasen meses, regenerar con el estado actualizado (agregar `--estado`/`--inicio` al modelo).
 
+## Parte 8 – Cocos: plan de desapalancamiento (bajo demanda)
+Modelo `scripts/cocos_desapalancamiento.py` + informe `scripts/informe_cocos.py`. Parte de los precios actuales de BondTerminal (MEP) y de las
+posiciones del último estado de Cocos; compara A (repagar caución, con o sin canje cable->MEP), B (comprar AO27 u ON cortas) y mixta con el calendario de
+aportes de Ivo. Incluye: apalancamiento hoy, capital requerido para cada objetivo (repagar vs comprar), calendario mensual, colchón ante shocks de riesgo
+país y menú de activos. La brecha MEP/CCL (~5-6%) se captura al canjear cable a MEP y vale igual para A y B. Pendientes de datos: reglas de margen de Cocos,
+costo real del canje, tickers/TIR de las ON (el listado de IOL no trae TIR ni duration).
+
 ## Formato del email (htmlBody, tablas simples, sin JS)
 1. Titular: 2-3 líneas con lo más importante.
 2. Notas: tabla resumen, riesgos, volumen, próximas fechas.
