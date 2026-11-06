@@ -77,7 +77,8 @@ def extras():
     G = AR0 + NOTAS0 + OTROS; puente = []
     for X in (0, 40000, 60000, 87000, 128000):
         D = CAUC0 - X; puente.append({"X": X, "lev": round(G / (G - D), 2), "bp_3x": round((G - 1.5 * D) / (AR0 * DUR) * 10000)})
-    return {"on_pampa": _m.datos(), "brecha": brecha, "comparacion_100": comp, "meses_expuestos": meses, "puente": puente}
+    _e = _u.spec_from_file_location("estr", os.path.join(os.path.dirname(os.path.abspath(__file__)), "cocos_estrategia.py")); _em = _u.module_from_spec(_e); import sys as _sys; _old = _sys.argv; _sys.argv = ["x"]; _e.loader.exec_module(_em); _sys.argv = _old
+    return {"estrategia": _em.run(), "on_pampa": _m.datos(), "brecha": brecha, "comparacion_100": comp, "meses_expuestos": meses, "puente": puente}
 
 def main():
     G0 = AR0 + NOTAS0 + OTROS; N0 = G0 - CAUC0; L0 = G0 / N0

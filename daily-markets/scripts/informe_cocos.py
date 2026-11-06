@@ -65,6 +65,24 @@ for t, r in X_["on_pampa"].items():
         str(r["mep"]["ytm_pct"]).replace(".", ","), str(cab["ytm_pct"]).replace(".", ","), est, str(r["mep"]["mod_dur"]).replace(".", ","), "USD " + format(r["monto_operado_D_usd"], ",").replace(",", "."))
 on_t = ('<table><tr><th>ON Pampa</th><th>Vence</th><th>Cupón</th><th>Ley</th><th>Precio MEP</th><th>Precio cable</th><th>TIR MEP</th><th>TIR cable</th><th>Duration</th><th>Operado por día (MEP)</th></tr>' + on_rows + '</table>'
   '<p class="desc">TIR calculada con cupones semestrales y capital al vencimiento (supuesto: sin amortizaciones antes), precios de IOL del 6/11. * Sin cotización en cable: estimada con la brecha promedio. El <b>current yield</b> que viste en la captura (7,1 %, 5,6 %, 5,4 %) sobreestima el rendimiento de las que cotizan sobre la par: la MGCQ, p. ej., tiene un CY de 6,7 % en MEP pero una TIR de 2,6 %.</p>')
+# --- estrategia dos objetivos
+ES = X_["estrategia"]["estrategias"]
+def fila(k, m):
+    return [r for r in ES[k]["filas"] if r["m"] == m][0]
+est_t = '<table><tr><th rowspan="2">Estrategia</th>' + "".join('<th colspan="3">%s</th>' % l for l in ("ene-27", "jun-27", "dic-27")) + '<th colspan="3">Hito de apalancamiento de Cocos</th></tr><tr>' + ('<th>Apal. Cocos</th><th>Capacidad de compra</th><th>Bonos AR / neto</th>' * 3) + '<th>2,0x</th><th>1,8x</th><th>1,5x</th></tr>'
+for k in ("E1", "E2", "E3", "E4"):
+    est_t += '<tr><td style="text-align:left">%s</td>' % ES[k]["nombre"]
+    for m in (3, 8, 14):
+        r = fila(k, m); est_t += '<td class="n">%s</td><td class="n">%s</td><td class="n">%s %%</td>' % (x(r["lev_cocos"]), kes(r["firepower_2x"]), str(r["ar_pct_neto"]).replace(".", ","))
+    est_t += '<td>%s</td><td>%s</td><td>%s</td></tr>' % (ES[k]["hito_2_0"], ES[k]["hito_1_8"], ES[k]["hito_1_5"])
+est_t += '</table>'
+est2_t = '<table><tr><th>Estrategia (dic-27)</th><th>Caución</th><th>Activos fuera de Cocos</th><th>Bonos AR / activos totales</th><th>Pérdida del neto total si +300 pb</th></tr>' + "".join('<tr><td style="text-align:left">%s</td><td class="n">%s</td><td class="n">%s</td><td class="n">%s %%</td><td class="n">%s %%</td></tr>' % (ES[k]["nombre"], kes(fila(k, 14)["caucion"]), kes(fila(k, 14)["noc"]), str(fila(k, 14)["ar_pct_total"]).replace(".", ","), str(fila(k, 14)["perdida_300_pct_neto"]).replace(".", ",")) for k in ("E1", "E2", "E3", "E4")) + '</table>'
+est_html = ('<h3>Tu objetivo: más capacidad de compra y menos dependencia de bonos AR</h3>'
+ '<p class="desc"><b>Capacidad de compra</b> = cuánto más podrías comprar en Cocos (financiado con caución) sin pasar de 2,0x de apalancamiento: 2,0 × patrimonio neto de Cocos menos los activos de Cocos. Hoy es cero: estás por encima de 2,0x. <b>Bonos AR / neto</b> = cuánto pesan tus bonos argentinos contra tu patrimonio total, que es la medida más limpia de dependencia. Aportes de tu calendario, canje con captura de 5,5 % y 6 % anual para lo que está fuera de Cocos.</p>'
+ + est_t + est2_t +
+ '<ul><li><b>Cada USD que repagás con plata nueva genera 2 USD de capacidad de compra</b> (a 2,0x); cada USD de bonos que vendés para repagar genera 1 USD. Por eso repagar con capital es lo más eficiente para tu primer objetivo.</li>'
+ '<li><b>Diversificar con plata nueva no baja los bonos AR / neto</b> más que repagar: los dos suman al patrimonio. Lo que cambia es el apalancamiento: diversificar deja más caución viva y menos capacidad de compra (193 mil contra 392 mil en dic-27). Lo único que baja el peso de los bonos AR es <b>venderlos</b> (de 72 % a 57 % del neto) o que tu patrimonio crezca.</li>'
+ '<li><b>Vender los bonos largos</b> (AL35, AE38, AL41, GD46: USD @L@ mil, @D@ % de la sensibilidad al riesgo país) es lo que más mueve ambos objetivos a la vez, pero renuncia a su TIR de 12 a 14 % (unos USD 19 mil al año contra el 0,5 % de la caución) y a la recuperación: en el modelo de largo plazo costó USD 54 a 86 mil de patrimonio final si gana Milei o la oposición paga, y rindió 39 mil en una reestructuración. Vender solo una parte, o esperar a un rebote, son alternativas.</li></ul>').replace("@L@", kes(X_["estrategia"]["largos_usd"]).replace("k", "")).replace("@D@", str(X_["estrategia"]["dv01_largos_pct"]).replace(".", ","))
 inflow = 15000 * 2 + 80000 + 20000 * 2 + 6000 * 9
 page = f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cocos: plan de desapalancamiento</title>
 <style>:root{{--bg:#fcfcfb;--text:#0b0b0b;--muted:#52514e;--grid:#e6e5e1;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--card:#fff;--line:#d6d5d0}}
@@ -78,7 +96,7 @@ table{{border-collapse:collapse;font-size:12px;margin:8px 0;display:block;overfl
 <h3>Dónde estás hoy</h3>
 <table><tr><th>Bonos AR (valuados hoy)</th><th>Notas BBVA/Citi (supuesto 70 mil)</th><th>Otros</th><th>Activos de Cocos</th><th>Caución</th><th>Neto de Cocos</th><th>Apalancamiento</th></tr><tr><td class="n">{kes(E["ar_usd"])}</td><td class="n">{kes(E["notas"])}</td><td class="n">{kes(E["otros"])}</td><td class="n">{kes(E["bruto"])}</td><td class="n">{kes(E["caucion"])}</td><td class="n">{kes(E["neto"])}</td><td class="n"><b>{x(E["apalancamiento"])}</b></td></tr></table>
 <p class="desc">Era 2,36x al 30/10. El riesgo país pasó de 796 a 934 pb (+143 en la semana) y la cartera de bonos AR perdió unos USD 50 mil de valor. Con duration de {str(E["duration_ar"]).replace(".", ",")}, <b>una suba de unos 290 pb más llevaría a Cocos a 3x</b>.</p>
-<h3>1. Cuánto hace falta: repagar caución o comprar activos</h3>
+{est_html}<h3>1. Cuánto hace falta: repagar caución o comprar activos</h3>
 <p class="desc">Repagar baja el apalancamiento entre 2 y 3 veces más rápido que comprar activos con la misma plata (más cuanto menor el objetivo), porque comprar suma al activo y al patrimonio a la vez, y repagar solo suma al patrimonio. Capital en USD MEP, hoy.</p>{req}
 <p class="desc">Si lo enviás desde el exterior y canjeás cable a MEP (brecha {str(P["gap"]).replace(".", ",")} % neta), necesitás ~{str(P["gap"]).replace(".", ",")} % menos de dólares: p. ej., para llegar a 2,0x repagando, USD {kes(d["requerido"][2]["desde_afuera_repagar"])} desde afuera.</p>
 <h3>2. La brecha MEP/CCL: vale para las dos opciones</h3>
