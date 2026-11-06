@@ -206,6 +206,7 @@ costo real del canje, tickers/TIR de las ON (el listado de IOL no trae TIR ni du
 2. Notas: tabla resumen, riesgos, volumen, próximas fechas.
 3. Curva AR: tabla de bonos (precio, var, TIR, paridad, volumen), pendiente/riesgo país, lectura.
 4. Cartera Cocos: pesos, TIR/duration ponderada, concentración, antigüedad del dato.
+4a. **Estrategia Cocos esta semana** (bloque fijo de 5 líneas): ejecutar `python3 -I scripts/estrategia_semanal.py --rp <riesgo país> --lev <apalancamiento Cocos> --caucion <caución USD> [--vendido <fracción de largos ya vendida>] --html` y pegar el resultado. Si hay DISPARADOR ACTIVO, repetirlo como aviso destacado en el titular.
 4b. Dónde alocar futuros ahorros (Parte 5).
 4c. Serie de apalancamiento (Parte 6): tabla de 12 semanas + link a la planilla.
 4d. Proyección de largo plazo (Parte 7): real vs proyectado, riesgo-retorno, link a las gráficas.
