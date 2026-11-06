@@ -31,6 +31,30 @@ hit = '<table><tr><th>Opción</th><th>Llega a 2,4x</th><th>2,2x</th><th>2,0x</th
 def lev_en(k, m): return CAM[k][m]["lev"]
 ruta = '<table><tr><th>Opción</th><th>hoy</th><th>ene-27</th><th>mar-27</th><th>jun-27</th><th>oct-27</th><th>dic-27</th><th>Caución dic-27</th></tr>' + "".join(f'<tr><td>{html.escape(OP[k])}</td>' + "".join(f'<td class="n">{x(lev_en(k, m))}</td>' for m in (0, 3, 5, 8, 12, 14)) + f'<td class="n">{kes(CAM[k][14]["caucion"])}</td></tr>' for k in ("A0", "A1", "M", "B1", "B2")) + '</table>'
 sh = '<table><tr><th>Opción</th><th>Sin shock</th><th>Riesgo país +150 pb</th><th>+300 pb</th><th>+600 pb</th><th>Suba que lleva a 3x</th><th>a 4x</th></tr>' + "".join(f'<tr><td>{html.escape(OP[k])}</td><td class="n">{x(lev_en(k, 3))}</td>' + "".join(f'<td class="n">{x(d["shocks"][b][k][3]["lev"])}</td>' for b in ("150", "300", "600")) + f'<td class="n">+{d["colchon_bp"][k]["ene27_3x"]} pb</td><td class="n">+{d["colchon_bp"][k]["ene27_4x"]} pb</td></tr>' for k in ("A0", "A1", "M", "B1", "B2")) + '</table>'
+# --- secciones nuevas (v2)
+X_ = d["extras"]
+brecha_t = '<table><tr><th>Par</th><th>Brecha D/C</th><th>Monto operado D (USD)</th><th>Monto operado C (USD)</th></tr>' + "".join('<tr><td>%s</td><td class="n">%s %%</td><td class="n">%s</td><td class="n">%s</td></tr>' % (k, str(v["gap_pct"]).replace(".", ","), kes(v["monto_D"]), kes(v["monto_C"])) for k, v in X_["brecha"].items()) + '</table>'
+c100 = X_["comparacion_100"]
+f1 = lambda v: str(v).replace(".", ",")
+comp_t = ('<table><tr><th>Qué hacés con USD 100 enviados desde el exterior (hasta oct-27)</th><th>Resultado en USD</th><th>vs T-bill</th></tr>'
+  '<tr><td>T-bill de EE. UU. afuera (4,1 %%)</td><td class="n">%s</td><td class="n">–</td></tr>'
+  '<tr><td>AO27 con canje, <b>los dólares se quedan en Argentina</b></td><td class="n">%s</td><td class="n">+%s</td></tr>'
+  '<tr><td>AO27 con canje y <b>repatriando</b> al vencer (si la brecha sigue igual)</td><td class="n">%s</td><td class="n">0,0</td></tr>'
+  '<tr><td>Canje y <b>repagar caución</b> (ahorra 0,5 %% de interés)</td><td class="n">%s</td><td class="n">+%s</td></tr></table>') % (
+  f1(c100["tbill_afuera"]), f1(c100["ao27_canje_queda_local"]), f1(round(c100["ao27_canje_queda_local"] - c100["tbill_afuera"], 1)),
+  f1(c100["ao27_canje_repatria"]), f1(c100["repagar_caucion_canje"]), f1(round(c100["repagar_caucion_canje"] - c100["tbill_afuera"], 1)))
+extra_html = ('<h3>2b. Costo real del canje: AL30C vs AL30D</h3>'
+  '<p class="desc">Con tu método (precio en dólares MEP dividido por precio en cable) y las últimas operaciones de IOL del 6/11. El par AL30 tiene liquidez de sobra: opera unos USD 7,5 millones diarios en cada lado. Los precios de compra y venta no vienen en la fuente, así que no puedo medir el spread: supongo que comisiones y spread de ida y vuelta se llevan 0,5 a 1 punto, de donde sale el 5 % neto del modelo.</p>' + brecha_t +
+  '<h3>2c. ¿AO27 con canje es comparable a un T-bill?</h3>'
+  '<div class="box">Sí, <b>si los dólares se quedan en Argentina</b>: AO27 rinde 4,1 % y el canje suma ~5 % de una vez, unos 9,2 % hasta octubre de 2027 contra 4,0 % del T-bill. Pero hay tres cosas: (1) <b>ese beneficio también lo tenés si repagás caución</b>, así que contra la caución el AO27 gana solo la diferencia de tasas, ~3,6 % anual, con riesgo y más apalancamiento; (2) si después querés <b>repatriar</b>, el canje se devuelve y queda igual que el T-bill; (3) el AO27 opera poco, unos USD 218 mil diarios en MEP y 66 mil en cable: comprar USD 80 mil es más de un tercio del día y mueve el precio. Además vence a fin de octubre de 2027, pegado a la elección.</div>' + comp_t)
+tr_html = ('<h3>3b. El tramo más expuesto es noviembre a enero</h3>'
+  '<p class="desc">Respetando tu calendario, con aportes a fin de mes, los USD 80 mil entran a fin de enero y hasta entonces el apalancamiento sigue alto. Suba del riesgo país que llevaría a Cocos a 3x, mes a mes:</p>'
+  '<table><tr><th>Fin de</th><th colspan="2">Canjear y repagar</th><th colspan="2">Canjear y comprar AO27</th></tr><tr><th></th><th>Apalancamiento</th><th>Suba a 3x</th><th>Apalancamiento</th><th>Suba a 3x</th></tr>' +
+  "".join('<tr><td>%s</td><td class="n">%s</td><td class="n">+%d pb</td><td class="n">%s</td><td class="n">+%d pb</td></tr>' % (r["fecha"], x(r["A1"]), r["A1_bp"], x(r["B1"]), r["B1_bp"]) for r in X_["meses_expuestos"]) + '</table>'
+  '<h3>3c. Opción puente: adelantar capital desde Citi o HSBC</h3>'
+  '<p class="desc">Como dijiste que podés usar los ETFs de Citi o la cuenta de HSBC si cambia la necesidad de liquidez, una opción es mover capital a Cocos ahora para repagar caución y reponerlo con los aportes de enero en adelante. No es una recomendación: tiene costo de venta de los ETFs y posibles impuestos.</p>'
+  '<table><tr><th>Capital movido hoy</th><th>Apalancamiento resultante</th><th>Suba del riesgo país que lleva a 3x</th></tr>' +
+  "".join('<tr><td class="n">%s</td><td class="n">%s</td><td class="n">+%d pb</td></tr>' % (kes(r["X"]), x(r["lev"]), r["bp_3x"]) for r in X_["puente"]) + '</table>')
 inflow = 15000 * 2 + 80000 + 20000 * 2 + 6000 * 9
 page = f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cocos: plan de desapalancamiento</title>
 <style>:root{{--bg:#fcfcfb;--text:#0b0b0b;--muted:#52514e;--grid:#e6e5e1;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--card:#fff;--line:#d6d5d0}}
@@ -49,22 +73,22 @@ table{{border-collapse:collapse;font-size:12px;margin:8px 0;display:block;overfl
 <p class="desc">Si lo enviás desde el exterior y canjeás cable a MEP (brecha {P["gap"]:.0f} % neta), necesitás ~{P["gap"]:.0f} % menos de dólares: p. ej., para llegar a 2,0x repagando, USD {kes(d["requerido"][2]["desde_afuera_repagar"])} desde afuera.</p>
 <h3>2. La brecha MEP/CCL: vale para las dos opciones</h3>
 <div class="box">La brecha (hoy ~5,9 % bruto en BondTerminal; supongo {P["gap"]:.0f} % neta) se captura al <b>canjear dólares cable a MEP</b>, no al comprar un activo. Se aprovecha igual si con esos dólares repagás caución (Opción A1) o comprás activos (B). Con tus aportes de USD {kes(inflow)} hasta dic-27 equivale a unos <b>USD {kes(inflow * P["gap"] / 100)}</b>. Lo que sí diferencia a A de B es qué hacés con esos dólares ya canjeados.</div>
-<h3>3. Calendario con tus aportes (nov-26 a dic-27)</h3>
+{extra_html}<h3>3. Calendario con tus aportes (nov-26 a dic-27)</h3>
 <p class="desc">Aportes: 15 + 15 mil (nov-dic), 80 mil en enero, 20 + 20 mil (feb-mar) y 6 mil por mes hasta diciembre, más los cupones de lo que tenés en Cocos. Precios constantes de hoy.</p>
 <div class="panel"><div class="leg">{leg}</div>{chart}</div>{ruta}{hit}
-<h3>4. Colchón ante una nueva caída</h3>
+{tr_html}<h3>4. Colchón ante una nueva caída</h3>
 <p class="desc">Apalancamiento de Cocos en enero de 2027 si el riesgo país subiera de golpe. Las columnas de la derecha dicen cuánto tendría que subir para llegar a 3x o 4x.</p>{sh}
 <h3>5. Activos de bajo riesgo para la opción B</h3>
 <table><tr><th>Activo</th><th>Precio MEP</th><th>TIR MEP</th><th>TIR en cable (con la brecha)</th><th>Duration</th><th>Comentario</th></tr>
-<tr><td>AO27</td><td class="n">101,87</td><td class="n">4,09 %</td><td class="n">10,44 %</td><td class="n">0,92</td><td style="text-align:left">Rinde lo mismo que un T-bill de EE. UU. (4,1 %), pero con riesgo argentino. Su ventaja es estar en Cocos como colateral.</td></tr>
+<tr><td>AO27</td><td class="n">101,87</td><td class="n">4,09 %</td><td class="n">10,44 %</td><td class="n">0,92</td><td style="text-align:left">En MEP rinde lo mismo que un T-bill (4,1 %); con el canje y quedándose en Argentina, ~9 % hasta octubre de 2027. Opera poco y vence junto a la elección.</td></tr>
 <tr><td>ON corta (Pampa Energía u otra)</td><td colspan="5" style="text-align:left">Sin datos: el listado de IOL no trae TIR ni duration de las ON. Usé un supuesto de 7 % y duration 1,5. Pasame los tickers y el precio de cada una y reemplazo el supuesto.</td></tr>
 <tr><td>AO29 (lo que ya tenés)</td><td class="n">76,68</td><td class="n">16,47 %</td><td class="n">18,84 %</td><td class="n">2,47</td><td style="text-align:left">Cayó mucho, pero es lo que originó el sobregiro. Comprar más aumenta la concentración.</td></tr></table>
 <h3>6. Lectura preliminar (marco, no asesoramiento financiero)</h3>
 <ul><li><b>Primero repagar, después invertir.</b> Hasta bajar a ~2,0x, repagar es 2x más eficiente que comprar y el único camino que llega a 1,5x durante 2027. Con tu calendario, repagar llega a 2,0x en enero y a 1,5x hacia junio; comprar AO27 u ON llega a 2,0x en marzo y a 1,8x recién en diciembre.</li>
 <li><b>El canje de la brecha conviene en ambos casos:</b> es independiente de la opción. Si la brecha se achica, mejor canjear antes que después, siempre que las reglas de Cocos lo permitan.</li>
 <li><b>Una vez bajo 2,0x</b> tiene sentido analizar la opción B para lo que sobre, o la mixta, porque ahí ya hay colchón.</li>
-<li><b>Mi duda sobre AO27:</b> rinde como un T-bill. La ventaja de B no es el rendimiento: es mantener colateral dentro de Cocos y, si la brecha se mantiene, parte del retorno viene del canje. Si el objetivo es solo rendimiento sin riesgo argentino, los T-bills afuera rinden igual.</li></ul>
+<li><b>AO27 vs T-bill:</b> con el canje y sin repatriar, el AO27 le gana al T-bill, pero la ventaja viene del canje, que también capturás repagando caución. Lo propio del AO27 es la tasa (4,1 % contra 0,5 % de la caución) a cambio de riesgo argentino, poca liquidez y más apalancamiento.</li></ul>
 <h3>Lo que necesito saber para afinar el modelo</h3>
-<ul><li>Reglas de margen de Cocos: umbral de llamado, haircut por activo (bonos, ON, AO27) y si la caución se renueva sola.</li><li>Costo real del canje cable a MEP: comisión, spread y si hay restricción cruzada (días de espera) o impuestos.</li><li>Tickers y precios de las ON de Pampa Energía que mirás.</li><li>Si podés adelantar los USD 80 mil de enero.</li><li>Si el estado de cuenta de Cocos cambió desde el 31/10 (compras, ventas, la nota nueva de Citi).</li></ul>
+<ul><li>Reglas de margen de Cocos: umbral de llamado, haircut por activo (bonos, ON, AO27) y si la caución se renueva sola.</li><li>Comisión real de Cocos por el canje y si hay restricción cruzada (días de espera) o impuestos.</li><li>Tickers y precios de las ON de Pampa Energía que mirás.</li></ul>
 <p class="desc">Modelo de escenarios con precios constantes y shock lineal por duration; no es asesoramiento financiero.</p></main></body></html>'''
 open(sys.argv[2], "w").write(page); print("ok", len(page))

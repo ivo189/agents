@@ -56,6 +56,27 @@ def meses_hasta(rows, L):
         if r["lev"] is not None and r["lev"] <= L: return r["fecha"]
     return "no llega"
 
+# Cotizaciones IOL (último operado, 6-nov-2026): (precio D=MEP, precio C=cable, monto operado D, monto operado C en USD)
+IOL = {"AL30": (51.51, 48.60, 7468105, 7629486), "GD30": (53.07, 50.00, 68937, 7843), "AL35": (63.70, 60.44, 393874, 54692), "GD35": (68.61, 65.15, 101390, 13865),
+       "AO27": (102.15, 96.35, 218311, 66477), "AO29": (76.99, 72.90, 106156, 25226)}
+
+def extras():
+    T, g = 0.98, a.gap / 100
+    brecha = {k: {"gap_pct": round(100 * (pd / pc - 1), 2), "monto_D": v[2], "monto_C": v[3]} for k, v in IOL.items() for pd, pc in [(v[0], v[1])]}
+    comp = {"tbill_afuera": round(100 * 1.041 ** T, 1), "ao27_canje_queda_local": round(100 * (1 + g) * (1 + a.ao27_tir / 100) ** T, 1),
+            "ao27_canje_repatria": round(100 * (1 + a.ao27_tir / 100) ** T, 1), "repagar_caucion_canje": round(100 * (1 + g) * (1 + a.caucion_tasa / 100 * T), 1)}
+    def bp3(op, m, L=3.0):
+        lo, hi = 0, 6000
+        for _ in range(40):
+            mid = (lo + hi) / 2; r = correr(op, mid, shock_m=m)[m]["lev"]
+            (lo, hi) = (lo, mid) if (r is None or r >= L) else (mid, hi)
+        return round((lo + hi) / 2)
+    meses = [{"fecha": LAB(m), "A1": correr("A1")[m]["lev"], "A1_bp": bp3("A1", m), "B1": correr("B1")[m]["lev"], "B1_bp": bp3("B1", m)} for m in range(0, 4)]
+    G = AR0 + NOTAS0 + OTROS; puente = []
+    for X in (0, 40000, 60000, 87000, 128000):
+        D = CAUC0 - X; puente.append({"X": X, "lev": round(G / (G - D), 2), "bp_3x": round((G - 1.5 * D) / (AR0 * DUR) * 10000)})
+    return {"brecha": brecha, "comparacion_100": comp, "meses_expuestos": meses, "puente": puente}
+
 def main():
     G0 = AR0 + NOTAS0 + OTROS; N0 = G0 - CAUC0; L0 = G0 / N0
     req = []
@@ -74,7 +95,7 @@ def main():
     colchon = {op: {"hoy_3x": bp_para(3.0, op, 0) if op == "A0" else None, "ene27_3x": bp_para(3.0, op, 3), "ene27_4x": bp_para(4.0, op, 3)} for op in OPC}
     out = {"estado_hoy": {"ar_usd": round(AR0), "duration_ar": round(DUR, 2), "notas": NOTAS0, "otros": OTROS, "bruto": round(G0), "caucion": CAUC0, "neto": round(N0), "apalancamiento": round(L0, 2)},
            "parametros": vars(a), "requerido": req, "opciones": {op: OPC[op][0] for op in OPC}, "caminos": base, "shocks": {str(k): v for k, v in shocks.items()}, "colchon_bp": colchon,
-           "hitos": {op: {str(L): meses_hasta(base[op], L) for L in (2.4, 2.2, 2.0, 1.8, 1.5)} for op in OPC}}
+           "extras": extras(), "hitos": {op: {str(L): meses_hasta(base[op], L) for L in (2.4, 2.2, 2.0, 1.8, 1.5)} for op in OPC}}
     if a.json: print(json.dumps(out, ensure_ascii=False))
     else:
         print(json.dumps(out["estado_hoy"])); 
