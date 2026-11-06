@@ -196,6 +196,11 @@ aportes de Ivo. Incluye: apalancamiento hoy, capital requerido para cada objetiv
 país y menú de activos. La brecha MEP/CCL (~5-6%) se captura al canjear cable a MEP y vale igual para A y B. Pendientes de datos: reglas de margen de Cocos,
 costo real del canje, tickers/TIR de las ON (el listado de IOL no trae TIR ni duration).
 
+### Estrategia vigente de Cocos (decidida por Ivo, nov-2026)
+- Objetivo: bajar la caución con capital nuevo (aportes + cupones, canje cable->MEP sin comisión) para recuperar capacidad de compra a 2,0x y, mientras, no vender bonos AR a precios golpeados (`scripts/cocos_estrategia.py`, estrategia E1 'Repagar todo').
+- **Regla de venta de largos (AL35, AE38, AL41, GD46, GD29): si el riesgo país (BondTerminal) llega a la zona de 600 pb (<= 620), Ivo vende sin dudarlo** y usa lo producido para repagar caución. Zona de alerta: <= 700 pb (vender hasta la mitad es opción a evaluar). `regla_venta()` calcula el efecto estático.
+- Cada viernes, en la sección de Cartera Cocos, informá: riesgo país actual, distancia a 620 pb, y si se cumple el disparador, un aviso destacado al inicio del email con lo que produciría la venta (valor de los largos a precio actual y apalancamiento resultante).
+
 ## Formato del email (htmlBody, tablas simples, sin JS)
 1. Titular: 2-3 líneas con lo más importante.
 2. Notas: tabla resumen, riesgos, volumen, próximas fechas.

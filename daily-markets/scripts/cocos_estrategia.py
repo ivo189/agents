@@ -51,6 +51,18 @@ def hito(rows, L):
 out = {"parametros": {"gap": a.gap, "ret_no_cocos": a.ret, "umbral_diversificar": a.umbral},
        "estrategias": {k: {"nombre": v[0], "filas": v[1], "hito_2_0": hito(v[1], 2.0), "hito_1_8": hito(v[1], 1.8), "hito_1_5": hito(v[1], 1.5)} for k, v in ESTR.items()},
        "largos_usd": round(sum(VAL[k] for k in LARGOS)), "ar_usd": round(sum(VAL.values())), "dv01_largos_pct": round(100 * sum(VAL[k] * DUR[k] for k in LARGOS) / sum(VAL[k] * DUR[k] for k in VAL), 1)}
+
+RP_HOY = 934
+def regla_venta(rp_obj=600, frac=1.0, rp_hoy=RP_HOY):
+    """Foto estática de la regla de disparo: si el riesgo país baja a rp_obj, se venden `frac` de los bonos largos (a precio shockeado por duration lineal) y se repaga caución."""
+    d = (rp_hoy - rp_obj) / 100.0                                   # puntos de TIR que bajan
+    val = {k: v * (1 + DUR[k] * d / 100) for k, v in VAL.items()}   # duration lineal (subestima por convexidad)
+    ar0 = sum(val.values()); G0 = ar0 + NOTAS + OTROS; N = G0 - CAUC0
+    prod = frac * sum(val[k] for k in LARGOS); G1 = G0 - prod; C1 = CAUC0 - prod
+    ar1 = ar0 - prod; tot1 = G1 + NOCOCOS0
+    return {"rp_obj": rp_obj, "frac": frac, "ganancia_largos": round(sum(val[k] - VAL[k] for k in LARGOS)), "producido": round(prod), "lev_antes": round(G0 / N, 2), "lev_despues": round(G1 / (G1 - C1), 2),
+            "caucion_despues": round(C1), "firepower_2x_despues": round(max(2 * (G1 - C1) - G1, 0)), "ar_pct_neto_antes": round(100 * ar0 / (G0 + NOCOCOS0 - CAUC0), 1), "ar_pct_neto_despues": round(100 * ar1 / (tot1 - C1), 1)}
+out["regla_venta"] = [regla_venta(rp, f) for rp in (700, 600) for f in (0.5, 1.0)]
 def run(): return out
 if __name__ == "__main__":
     if a.json: print(json.dumps(out, ensure_ascii=False))
