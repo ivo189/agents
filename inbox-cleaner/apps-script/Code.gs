@@ -25,10 +25,18 @@ const sheet = (n) => SpreadsheetApp.getActive().getSheetByName(n || SHEET) || Sp
 const deadline = () => Date.now() + CFG.maxMinutes * 60000;
 
 // ---------- utilidades Gmail ----------
+function withRetry(fn) {
+  for (let i = 0; ; i++) {
+    try { return fn(); } catch (e) {
+      if (i >= 4 || !/quota|rate|429|backend|unavailable/i.test(String(e))) throw e;
+      Utilities.sleep(15000 * (i + 1));
+    }
+  }
+}
 function listIds(q, max) {
   const ids = []; let pt;
   do {
-    const r = Gmail.Users.Messages.list('me', {q: q, maxResults: 500, pageToken: pt});
+    const r = withRetry(() => Gmail.Users.Messages.list('me', {q: q, maxResults: 500, pageToken: pt}));
     (r.messages || []).forEach((m) => ids.push(m.id)); pt = r.nextPageToken;
   } while (pt && (!max || ids.length < max));
   return ids;
@@ -36,11 +44,18 @@ function listIds(q, max) {
 function fetchMeta(ids, headers, limit) {
   const token = ScriptApp.getOAuthToken(), out = [];
   const qs = headers.map((h) => 'metadataHeaders=' + h).join('&');
-  for (let i = 0; i < ids.length && Date.now() < limit; i += 50) {
-    const reqs = ids.slice(i, i + 50).map((id) => ({
+  const queue = ids.slice(); let size = 25;
+  while (queue.length && Date.now() < limit) {
+    const chunk = queue.splice(0, size), failed = [];
+    const res = UrlFetchApp.fetchAll(chunk.map((id) => ({
       url: 'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&' + qs,
-      headers: {Authorization: 'Bearer ' + token}, muteHttpExceptions: true}));
-    UrlFetchApp.fetchAll(reqs).forEach((r) => { if (r.getResponseCode() === 200) out.push(JSON.parse(r.getContentText())); });
+      headers: {Authorization: 'Bearer ' + token}, muteHttpExceptions: true})));
+    res.forEach((r, k) => {
+      const c = r.getResponseCode();
+      if (c === 200) out.push(JSON.parse(r.getContentText())); else if (c === 429 || c === 403) failed.push(chunk[k]);
+    });
+    if (failed.length) { queue.unshift.apply(queue, failed); size = Math.max(5, size >> 1); Utilities.sleep(20000); }
+    else Utilities.sleep(800);
   }
   return out;
 }
@@ -48,22 +63,23 @@ const hdr = (m, n) => ((m.payload.headers || []).find((h) => h.name.toLowerCase(
 const parseFrom = (s) => { const m = s.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>/); return m ? [m[1].trim(), m[2].toLowerCase()] : ['', s.trim().toLowerCase()]; };
 function modify(ids, add, remove) {
   for (let i = 0; i < ids.length; i += 1000)
-    Gmail.Users.Messages.batchModify({ids: ids.slice(i, i + 1000), addLabelIds: add, removeLabelIds: remove}, 'me');
+    withRetry(() => Gmail.Users.Messages.batchModify({ids: ids.slice(i, i + 1000), addLabelIds: add, removeLabelIds: remove}, 'me'));
 }
 function makeFilters(emails, action) {
   for (let i = 0; i < emails.length; i += 40)
-    Gmail.Users.Settings.Filters.create({criteria: {query: 'from:(' + emails.slice(i, i + 40).join(' OR ') + ')'}, action: action}, 'me');
+    withRetry(() => Gmail.Users.Settings.Filters.create(
+      {criteria: {query: 'from:(' + emails.slice(i, i + 40).join(' OR ') + ')'}, action: action}, 'me'));
 }
 const protectedBy = (e) => CFG.keep.some((p) => e.includes(p)) ? 'config.keep'
   : (CFG.priority.find((r) => r.from.some((p) => e.includes(p))) || {label: ''}).label && 'prioridad';
 
 // ---------- 1. inventario ----------
 function inventory() {
-  const t0 = Date.now(), tContacts = t0 + 90000, tEnd = deadline();
+  const t0 = Date.now(), tContacts = t0 + 60000, tEnd = deadline();
   const contacts = new Set();
-  fetchMeta(listIds('in:sent', 3000), ['To', 'Cc'], tContacts).forEach((m) =>
+  fetchMeta(listIds('in:sent', 500), ['To', 'Cc'], tContacts).forEach((m) =>
     ['To', 'Cc'].forEach((f) => hdr(m, f).split(',').forEach((p) => { const e = parseFrom(p)[1]; if (e.includes('@')) contacts.add(e); })));
-  const ids = listIds('is:unread', 60000);
+  const ids = listIds('is:unread', 15000);
   const metas = fetchMeta(ids, ['From', 'List-Unsubscribe', 'List-Unsubscribe-Post'], tEnd);
   const agg = {};
   metas.forEach((m) => {
