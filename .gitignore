@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+inbox-cleaner/credentials.json
+inbox-cleaner/token.json
+inbox-cleaner/state/

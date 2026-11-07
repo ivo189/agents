@@ -1,0 +1,31 @@
+{
+  "_nota": "Substrings de email/dominio. 'keep' = nunca tocar. 'priority' = se etiquetan y se marcan importantes. Ajustalo a tu gusto.",
+  "keep": [
+    "anchapebot@gmail.com",
+    "property.booking.com"
+  ],
+  "priority": [
+    {
+      "label": "Prioridad/Finanzas",
+      "from": [
+        "bancogalicia.com.ar",
+        "cajadevalores.com.ar",
+        "interactivebrokers.com",
+        "uala.mx",
+        "mercadopago.com",
+        "cocos.capital",
+        "nu@nu.com.mx",
+        "mails.santander.com.ar",
+        "hipotecario.com.ar"
+      ]
+    },
+    {
+      "label": "Prioridad/Impuestos",
+      "from": ["sat.gob.mx", "arca.gob.ar", "afip.gob.ar"]
+    },
+    {
+      "label": "Prioridad/Viajes",
+      "from": ["noreply@booking.com", "property.booking.com"]
+    }
+  ]
+}
