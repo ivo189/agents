@@ -17,6 +17,10 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('Inbox Cleaner')
     .addItem('1. Inventario', 'inventory').addSeparator()
     .addItem('2a. Limpiar (simulación)', 'cleanDry').addItem('2b. Limpiar (APLICAR)', 'cleanApply').addSeparator()
+    .addItem('2c. MASIVO promos sin leer → papelera (simulación)', 'bulkPromosDry')
+    .addItem('2d. MASIVO promos sin leer → papelera (APLICAR)', 'bulkPromosApply')
+    .addItem('2e. MASIVO Novedades/Social >30 días → marcar leídas (simulación)', 'bulkReadDry')
+    .addItem('2f. MASIVO Novedades/Social >30 días → marcar leídas (APLICAR)', 'bulkReadApply').addSeparator()
     .addItem('3. Desuscribir one-click (APLICAR)', 'unsubscribe')
     .addItem('4. Prioridades (APLICAR)', 'prioritize').addToUi();
 }
@@ -128,6 +132,30 @@ function runClean(apply) {
   alertUi((apply ? 'A la papelera: ' : 'Simulación: iría a la papelera ') + total + ' mensajes de ' + n + ' remitentes.' +
     (cut ? '\nSe acabó el tiempo: volvé a ejecutar para seguir.' : ''));
 }
+
+// ---------- 2c-2f. limpieza masiva por búsqueda (no lee mail por mail) ----------
+function keepers() {
+  const set = new Set(CFG.keep);
+  CFG.priority.forEach((r) => r.from.forEach((x) => set.add(x)));
+  sheet().getDataRange().getValues().slice(1).forEach((r) => { if (String(r[6]).trim().toLowerCase() === 'keep') set.add(r[0]); });
+  const cs = sheet(CONTACTS);
+  if (cs.getLastRow()) cs.getRange(1, 1, cs.getLastRow(), 1).getValues().forEach((x) => set.add(x[0]));
+  return Array.from(set).filter(Boolean);
+}
+function bulk(baseQuery, add, remove, apply, title) {
+  const ids = listIds(baseQuery), protectedIds = new Set(), keep = keepers();
+  for (let i = 0; i < keep.length; i += 40)
+    listIds(baseQuery + ' from:(' + keep.slice(i, i + 40).join(' OR ') + ')').forEach((id) => protectedIds.add(id));
+  const todo = ids.filter((id) => !protectedIds.has(id));
+  if (apply) modify(todo, add, remove);
+  alertUi(title + '\n' + (apply ? 'Procesados: ' : 'Simulación, se procesarían: ') + todo.length +
+    ' mensajes. Protegidos (keep/prioridad/contactos): ' + protectedIds.size + '.');
+}
+function bulkPromosDry() { bulk('category:promotions is:unread -is:starred', ['TRASH'], ['INBOX', 'UNREAD'], false, 'Promos → papelera'); }
+function bulkPromosApply() { bulk('category:promotions is:unread -is:starred', ['TRASH'], ['INBOX', 'UNREAD'], true, 'Promos → papelera'); }
+const READQ = '(category:updates OR category:social) is:unread older_than:30d -is:starred';
+function bulkReadDry() { bulk(READQ, [], ['UNREAD'], false, 'Novedades/Social viejas → marcar leídas'); }
+function bulkReadApply() { bulk(READQ, [], ['UNREAD'], true, 'Novedades/Social viejas → marcar leídas'); }
 
 // ---------- 3. baja one-click ----------
 function unsubscribe() {
