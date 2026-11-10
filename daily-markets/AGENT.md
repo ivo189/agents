@@ -204,7 +204,7 @@ Nada, Repagar caución, Fondo USD 4,5 %, AO29 si RP>700; los flujos de la cuenta
 
 ### Estrategia vigente de Cocos (decidida por Ivo, nov-2026)
 - Objetivo: bajar la caución con capital nuevo (aportes + cupones, canje cable->MEP sin comisión) para recuperar capacidad de compra a 2,0x y, mientras, no vender bonos AR a precios golpeados (`scripts/cocos_estrategia.py`, estrategia E1 'Repagar todo').
-- **Regla de venta escalonada de largos (AL35, AE38, AL41, GD46, GD29), acumulada sobre la posición de hoy y decidida por Ivo: riesgo país (BondTerminal) <= 600 pb vende 25 %; <= 500 pb llega a 50 %; <= 400 pb llega a 100 %.** Lo producido repaga caución. Sin vender hasta 600. `regla_venta()` calcula el efecto estático.
+- **Regla de venta escalonada de largos (AL35, AE38, AL41, GD46, GD29), acumulada sobre la posición de hoy y decidida por Ivo: riesgo país (BondTerminal) <= 600 pb vende 25 %; <= 500 pb llega a 50 %; <= 400 pb llega a 100 %.** Lo producido repaga caución. Sin vender hasta 600. **Rige solo antes de la elección (hasta sep-2027)**: después, con el escenario despejado, no se vende (los bonos se pagan o se canjean). `regla_venta()` calcula el efecto estático.
 - Cada viernes, en la sección de Cartera Cocos, informá: riesgo país actual, distancia al próximo escalón (600/500/400), y si se cumple el disparador, un aviso destacado al inicio del email con lo que produciría la venta (valor de los largos a precio actual y apalancamiento resultante).
 
 ## Formato del email (htmlBody, tablas simples, sin JS)

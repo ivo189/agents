@@ -2,7 +2,7 @@
 """Informe de decisión para la cuenta de Cocos: cómo administrar una cartera de bonos AR comprada a paridades más altas, con caución.
 Plantea la decisión en dos niveles: (1) poner o no capital nuevo (hasta 130 mil entre nov-26 y mar-27) y (2) si se pone, dónde.
 Lee las salidas JSON de proyeccion_cocos.py (base y sensibilidades): narrativa, tablas, gráfico de resultados y proyecciones temporales.
-Uso: informe_decision_cocos.py --dir <carpeta con pc_800/1000/1200.json, pc_1000_sinrec.json, pc_1000_cau2.json, pc_1000_sinregla.json> --out informe.html
+Uso: informe_decision_cocos.py --dir <carpeta con pc_800/1000/1200.json, pc_1000_sinrec.json, pc_1000_cau2.json, pc_500.json> --out informe.html
 Sin margin call: si el neto de Cocos queda negativo, Ivo inyecta USD para cubrir el margen (se informa cuánto)."""
 import json, argparse, os, sys, html, math, importlib.util
 
@@ -13,7 +13,7 @@ a = ap.parse_args()
 L = lambda f: json.load(open(os.path.join(a.dir, f)))
 B = L("pc_1000.json"); R = B["resultados"]; P = B["parametros"]; APO = {int(k): v for k, v in B["aportes"].items()}
 V = {k: L(f"pc_{k}.json")["resultados"] for k in ("800", "1000", "1200")}
-SR, C2, SG = L("pc_1000_sinrec.json")["resultados"], L("pc_1000_cau2.json")["resultados"], L("pc_1000_sinregla.json")["resultados"]
+SR, C2, SG = L("pc_1000_sinrec.json")["resultados"], L("pc_1000_cau2.json")["resultados"], L("pc_500.json")["resultados"]
 argv, sys.argv = sys.argv, [sys.argv[0]]
 sp = importlib.util.spec_from_file_location("pc", os.path.join(os.path.dirname(os.path.abspath(__file__)), "proyeccion_cocos.py"))
 pc = importlib.util.module_from_spec(sp); sp.loader.exec_module(pc); sys.argv = argv
@@ -174,7 +174,7 @@ def t_flujos():
     return t + '</table>'
 
 def t_sens(ests):
-    rows_ = [("Base (caución 0,5 % + 1 pp, previa 1.000)", R), ("Caución a 2 % + 1 pp", C2), ("Sin la regla de venta de largos", SG), ("Reestructuración sin recuperación (RP 2.000)", SR)]
+    rows_ = [("Base (caución 0,5 % + 1 pp, previa 1.000)", R), ("Caución a 2 % + 1 pp", C2), ("Previa optimista: baja a 500 pb en jun-27 (activa la regla de venta)", SG), ("Reestructuración sin recuperación (RP 2.000)", SR)]
     t = '<table><tr><th>Sensibilidad</th><th>Escenario</th>' + "".join(f'<th>{CORTO[e]}</th>' for e in ests) + '</tr>'
     for nombre, RR in rows_:
         for i, s in enumerate(SC):
@@ -218,7 +218,7 @@ resumen = f'''<ul class="key">
 </ul>'''
 
 esc_txt = f'''
-<div class="card"><h4>Milei reelecto</h4><p>El riesgo país pasa de ~1.000 a <b>{int(P["s1"])} pb</b> en oct-27. El AO29 sube de {c1(pc.px("AO29",11,ESC["S1"]))} a {c1(pc.px("AO29",12,ESC["S1"]))} y los largos de ~64 a ~90. Se cumplen los tres escalones de la regla (600/500/400 pb) y se venden todos los largos por unos {k_(row("S1","N",36)["venta_largos"])}, que repagan caución. El AO29 vence en oct-29 y la caución termina en cero.</p>
+<div class="card"><h4>Milei reelecto</h4><p>El riesgo país pasa de ~1.000 a <b>{int(P["s1"])} pb</b> en oct-27. El AO29 sube de {c1(pc.px("AO29",11,ESC["S1"]))} a {c1(pc.px("AO29",12,ESC["S1"]))} y los largos de ~64 a ~90. Los largos no se venden (la regla de venta rige solo antes de la elección) y siguen subiendo hasta ~{c1(pc.px("AL35",36,ESC["S1"]))} en oct-29. El AO29 vence en oct-29 y la caución termina en cero.</p>
 <p><b>Qué pesa:</b> cuánto AO29 tenés el día de la elección, porque en ese mes sube {c1(salto)} puntos. Después solo queda el carry hasta el vencimiento.</p></div>
 <div class="card"><h4>Oposición con shock</h4><p>El riesgo país salta a <b>{int(P["s2_peak"])} pb</b> por {P["s2_hold"]} meses y baja a {int(P["s2_end"])} en oct-29; la deuda se paga. El AO29 cae a {c1(pc.px("AO29",12,ESC["S2"]))}, pero al ser corto vuelve a 100 al vencer. Los largos caen a ~51 y terminan en ~{c1(pc.px("AL35",36,ESC["S2"]))}. No se activa la regla de venta.</p>
 <p><b>Qué pesa:</b> el AO29 se recupera porque vence a la par en oct-29; el shock se siente en el camino. La cartera de hoy, sin aportes, pasaría de {x2(row("S2","N",11)["lev"])} de apalancamiento en sep-27 a {x2(row("S2","N",12)["lev"])} en oct-27.</p></div>
@@ -251,14 +251,14 @@ trade = f'''
 <h4>6. Reversibilidad y momento</h4>
 <p>Nada es la única reversible: se puede aportar más adelante. Repagar y comprar AO29 no se deshacen sin costo. La ventaja de AO29 se gana estando comprado antes de la elección; después solo queda el carry hasta el vencimiento.</p>
 <h4>7. La regla de venta de largos</h4>
-<p>Con Milei, la regla vende todos los largos en oct-27. Sin la regla, el resultado sería {k_(fin(SG,"S1","R")-fin(R,"S1","R"))} mejor en las tres decisiones, porque los largos siguen subiendo después de la elección. Es el costo de bajar la exposición a AR cuando el mercado lo permite.</p>'''
+<p>La regla rige solo antes de la elección: después, con el escenario despejado, no tiene sentido vender, porque los bonos se pagan o se canjean. En las tres previas modeladas el riesgo país no baja de 800 antes de oct-27, así que la regla no se activa. Si la previa fuera mucho mejor (riesgo país a 500 pb en jun-27), se venderían la mitad de los largos por unos {k_(row("S1","N",36,SG)["venta_largos"])} antes de la elección: el resultado baja {k_(fin(R,"S1","R")-fin(SG,"S1","R"))} con Milei (se vende antes de la suba) y sube {k_(fin(SG,"S3","R")-fin(R,"S3","R"))} en la reestructuración (se sale antes de la caída). Es un seguro que se paga en los escenarios buenos.</p>'''
 
 senales = f'''<ul>
 <li><b>Ahora (nov-26):</b> decidir si se aporta. Si la respuesta es “todavía no”, Nada mantiene la opción abierta.</li>
 <li><b>Riesgo país antes de mar-27.</b> Si baja de {int(P["umbral_ao29"])} pb mientras entran los aportes, la decisión AO29 deja de comprar.</li>
 <li><b>Septiembre de 2027.</b> La previa a la vista: en el camino que sube a 1.200, el apalancamiento llega a {x2(row("S1","N",11,V["1200"])["lev"])} con Nada, {x2(row("S1","R",11,V["1200"])["lev"])} repagando y {x2(row("S1","A",11,V["1200"])["lev"])} con AO29.</li>
 <li><b>Tasa de caución:</b> el costo real es la tasa de mercado más 1 pp; cuanto más sube, más conviene repagar.</li>
-<li><b>Escalones de la regla de venta</b> (600/500/400 pb): avisa el email del viernes.</li>
+<li><b>Escalones de la regla de venta</b> (600/500/400 pb), hasta sep-27: avisa el email del viernes.</li>
 <li><b>Liquidez afuera para oct-27:</b> {k_(cob["R"])} a {k_(cob["N"])} según la decisión, para cubrir margen si hay reestructuración.</li>
 </ul>'''
 
@@ -303,7 +303,7 @@ table{{border-collapse:collapse;font-size:12px;margin:8px 0;display:block;overfl
 <ul>
 <li>Caución USD: tasa de mercado {c1(P["caucion_tasa"])} % + {c1(P["comision_caucion"])} pp de comisión de Cocos = <b>{c1(P["caucion_tasa"] + P["comision_caucion"])} % anual</b> (variable; en sensibilidades, 2 % + 1 pp).</li>
 <li>Todo flujo de la cuenta (cupones, vencimientos de las notas, ventas de bonos) repaga caución; cuando la caución llega a cero, el excedente va al fondo USD.</li>
-<li>Regla de venta escalonada de los bonos largos (AL35, AE38, AL41, GD46, GD29), decidida por vos: con riesgo país en 600 pb se vende el 25 %, en 500 pb el 50 % y en 400 pb el 100 %; lo producido repaga caución.</li>
+<li>Regla de venta escalonada de los bonos largos (AL35, AE38, AL41, GD46, GD29), decidida por vos: con riesgo país en 600 pb se vende el 25 %, en 500 pb el 50 % y en 400 pb el 100 %; lo producido repaga caución. <b>Rige solo antes de la elección</b>: después, con el escenario despejado, no se vende, porque los bonos se pagan o se canjean.</li>
 <li>El capital que entra desde afuera se canjea cable a MEP con una captura del {c1(P["gap"])} %, sin comisión.</li>
 <li>Sin margin call: si el neto de Cocos queda negativo, cubrís el margen con dólares de afuera. El informe muestra cuánto haría falta.</li>
 <li>La medida para comparar decisiones es el <b>neto de Cocos en oct-29 menos el capital aportado</b>, para no premiar a las que ponen más plata.</li>

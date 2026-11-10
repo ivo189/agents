@@ -9,7 +9,8 @@ Alternativas (Ivo, 10-nov-2026):
                          por debajo de 700 no compra y lo deja en el fondo USD. Los cupones del AO29 nuevo también repagan caución.
 En todas: todo flujo que entra (cupones, vencimientos) repaga caución; una vez cerrada, el excedente va al fondo USD.
 Regla de venta escalonada de largos (AL35/AE38/AL41/GD46/GD29): RP <= 600 vende 25 %, <= 500 llega a 50 %, <= 400 a 100 %;
-lo producido repaga caución (desactivar con --sin-regla).
+solo antes de la elección (después, con el escenario despejado, no se vende); lo producido repaga caución (desactivar con --sin-regla).
+Previa "500" (optimista): baja a 500 pb en jun-27; activa la regla.
 Escenarios desde la elección (oct-2027): S1 Milei reelecto -> RP 200; S2 Oposición con shock -> 1.600 pb por 6 meses y baja lineal
 a 900 en oct-2029; S3 Reestructuración (canje) -> RP 2.000, default dic-2027 (sin cupones), canje jun-2028 de todos los soberanos
 a un bono nuevo (quita 25 % del nominal, cupón 5 % semestral, vence jul-2035); RP baja lineal de 2.000 (jun-28) a 1.200 (oct-29).
@@ -20,7 +21,7 @@ Uso: proyeccion_cocos.py [--previa 800|1000|1200] [--recovery -1|0.40] [--s1 200
 import json, argparse
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--previa", default="1000", choices=["800", "1000", "1200"])
+ap.add_argument("--previa", default="1000", choices=["500", "800", "1000", "1200"])
 ap.add_argument("--recovery", type=float, default=-1, help="(obsoleto) S3 ahora se modela como canje")
 ap.add_argument("--quita", type=float, default=25, help="S3: quita de nominal en el canje (%%)")
 ap.add_argument("--cupon-nuevo", type=float, default=5.0, help="S3: cupón anual del bono nuevo (semestral)")
@@ -49,7 +50,7 @@ NOTAS = [("MSFT/ORCL", 10000, lambda m: 79 if 1 <= m <= 19 else 0, 19),
 APORTES = {1: 15000, 2: 15000, 3: 70000, 4: 15000, 5: 15000}
 ELEC, DEFAULT_M, CANJE_M, N = 12, 14, 20, 36       # elección oct-27, default dic-27, canje jun-28, fin oct-29
 VTO_NUEVO = 2035.5                                  # bono nuevo del canje: vence jul-2035, cupón semestral desde el canje
-PREVIAS = {"800": [(0, RP0), (5, 800), (11, 800)], "1000": [(0, RP0), (11, 1000)], "1200": [(0, RP0), (11, 1200)]}
+PREVIAS = {"500": [(0, RP0), (8, 500), (11, 500)], "800": [(0, RP0), (5, 800), (11, 800)], "1000": [(0, RP0), (11, 1000)], "1200": [(0, RP0), (11, 1200)]}
 ESTRATEGIAS = {"N": "Nada", "R": "Repagar caución", "F": "Fondo USD", "A": "AO29 si RP>700", "M": "Mitad fondo, mitad AO29", "P": "Fondo y repago antes de la elección"}
 
 def price(y, c, T):
@@ -121,7 +122,7 @@ def correr(scn, est):
             if m == N and not dflt:
                 v = vn["AO29"]; flujo += v; acum["venc_ao29"] += v; vn["AO29"] = 0.0
             # regla de venta escalonada de largos
-            if not args.sin_regla and not dflt:
+            if not args.sin_regla and not dflt and m < ELEC:          # la regla rige solo antes de la elección
                 obj = 1.0 if rp <= 400 else 0.5 if rp <= 500 else 0.25 if rp <= 600 else 0.0
                 if obj > vendido:
                     frac = (obj - vendido) / (1 - vendido)
