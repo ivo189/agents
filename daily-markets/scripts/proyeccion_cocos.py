@@ -49,7 +49,7 @@ APORTES = {1: 15000, 2: 15000, 3: 70000, 4: 15000, 5: 15000}
 ELEC, DEFAULT_M, CANJE_M, N = 12, 14, 20, 36       # elección oct-27, default dic-27, canje jun-28, fin oct-29
 VTO_NUEVO = 2035.5                                  # bono nuevo del canje: vence jul-2035, cupón semestral desde el canje
 PREVIAS = {"800": [(0, RP0), (5, 800), (11, 800)], "1000": [(0, RP0), (11, 1000)], "1200": [(0, RP0), (11, 1200)]}
-ESTRATEGIAS = {"N": "Nada", "R": "Repagar caución", "F": "Fondo USD", "A": "AO29 si RP>700"}
+ESTRATEGIAS = {"N": "Nada", "R": "Repagar caución", "F": "Fondo USD", "A": "AO29 si RP>700", "M": "Mitad fondo, mitad AO29", "P": "Fondo y repago antes de la elección"}
 
 def price(y, c, T):
     if T <= 0: return 100.0
@@ -132,10 +132,14 @@ def correr(scn, est):
             if ap_:
                 acum["aportes"] += ap_; x = ap_ * (1 + args.gap / 100)
                 if est == "R": flujo += x
-                elif est == "F": fondo += x
-                elif est == "A":
-                    if rp > args.umbral_ao29: vn["AO29"] += x / (px("AO29", m, scn) / 100); acum["compra_ao29"] += x
-                    else: fondo += x
+                elif est in ("F", "P"): fondo += x
+                elif est in ("A", "M"):
+                    y = x if est == "A" else x / 2
+                    if rp > args.umbral_ao29: vn["AO29"] += y / (px("AO29", m, scn) / 100); acum["compra_ao29"] += y
+                    else: fondo += y
+                    fondo += x - y
+            if est == "P" and m == ELEC - 1:             # sep-27: el fondo repaga caución antes de la elección
+                u = min(fondo, caucion); fondo -= u; caucion -= u
             # todo flujo repaga caución; el excedente va al fondo (si el flujo es negativo, sale del fondo o suma caución)
             if flujo >= 0:
                 rep = min(flujo, caucion); caucion -= rep; fondo += flujo - rep
