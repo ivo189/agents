@@ -258,7 +258,7 @@ senales = f'''<ul>
 <li><b>Riesgo país antes de mar-27.</b> Si baja de {int(P["umbral_ao29"])} pb mientras entran los aportes, la decisión AO29 deja de comprar.</li>
 <li><b>Septiembre de 2027.</b> La previa a la vista: en el camino que sube a 1.200, el apalancamiento llega a {x2(row("S1","N",11,V["1200"])["lev"])} con Nada, {x2(row("S1","R",11,V["1200"])["lev"])} repagando y {x2(row("S1","A",11,V["1200"])["lev"])} con AO29.</li>
 <li><b>Tasa de caución:</b> el costo real es la tasa de mercado más 1 pp; cuanto más sube, más conviene repagar.</li>
-<li><b>Escalones de la regla de venta</b> (600/500/400 pb), hasta sep-27: avisa el email del viernes.</li>
+<li><b>Escalones de la regla de venta</b> (600/500/400 pb), hasta sep-27: lo revisamos en cada update a demanda.</li>
 <li><b>Liquidez afuera para oct-27:</b> {k_(cob["R"])} a {k_(cob["N"])} según la decisión, para cubrir margen si hay reestructuración.</li>
 </ul>'''
 

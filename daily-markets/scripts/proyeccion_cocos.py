@@ -26,6 +26,9 @@ ap.add_argument("--recovery", type=float, default=-1, help="(obsoleto) S3 ahora 
 ap.add_argument("--quita", type=float, default=25, help="S3: quita de nominal en el canje (%%)")
 ap.add_argument("--cupon-nuevo", type=float, default=5.0, help="S3: cupón anual del bono nuevo (semestral)")
 ap.add_argument("--s3-end", type=float, default=1200, help="S3: riesgo país en oct-2029 (baja lineal desde el canje)")
+ap.add_argument("--s3-peak", type=float, default=2000, help="S3: riesgo país desde la elección hasta el canje")
+ap.add_argument("--canje-m", type=int, default=20, help="S3: mes del canje (20 = jun-28; 26 = dic-28)")
+ap.add_argument("--real", default=None, help="JSON con los aportes reales de Ivo (estrategia X); ver cocos_aportes_reales.json")
 ap.add_argument("--s1", type=float, default=200)
 ap.add_argument("--s2-peak", type=float, default=1600); ap.add_argument("--s2-hold", type=int, default=6); ap.add_argument("--s2-end", type=float, default=900)
 ap.add_argument("--gap", type=float, default=5.6, help="captura neta del canje cable->MEP (%%)")
@@ -52,6 +55,10 @@ ELEC, DEFAULT_M, CANJE_M, N = 12, 14, 20, 36       # elección oct-27, default d
 VTO_NUEVO = 2035.5                                  # bono nuevo del canje: vence jul-2035, cupón semestral desde el canje
 PREVIAS = {"500": [(0, RP0), (8, 500), (11, 500)], "800": [(0, RP0), (5, 800), (11, 800)], "1000": [(0, RP0), (11, 1000)], "1200": [(0, RP0), (11, 1200)]}
 ESTRATEGIAS = {"N": "Nada", "R": "Repagar caución", "F": "Fondo USD", "A": "AO29 si RP>700", "M": "Mitad fondo, mitad AO29", "P": "Fondo y repago antes de la elección"}
+REAL = {}
+if args.real:
+    for it in json.load(open(args.real))["aportes"]: REAL.setdefault(it["mes"], []).append(it)
+    ESTRATEGIAS["X"] = "Lo que hiciste"
 
 def price(y, c, T):
     if T <= 0: return 100.0
@@ -84,7 +91,7 @@ def interp(pts, m):
 def escenarios():
     return {"S1": {"nombre": f"Milei reelecto (RP {int(args.s1)})", "post": [(ELEC, args.s1)], "default": False},
             "S2": {"nombre": f"Oposición con shock (RP {int(args.s2_peak)})", "post": [(ELEC, args.s2_peak), (ELEC + args.s2_hold, args.s2_peak), (N, args.s2_end)], "default": False},
-            "S3": {"nombre": "Reestructuración (canje)", "post": [(ELEC, 2000), (CANJE_M, 2000), (N, args.s3_end)], "default": True}}
+            "S3": {"nombre": "Reestructuración (canje)" if args.s3_peak == 2000 else f"Reestructuración (RP {int(args.s3_peak)})", "post": [(ELEC, args.s3_peak), (args.canje_m, args.s3_peak), (N, args.s3_end)], "default": True}}
 def rp_t(m, scn): return interp(PREVIAS[args.previa], m) if m < ELEC else interp(scn["post"], m)
 
 def anios(m): return 2026 + (9 + m) / 12 + 1 / 12            # fin del mes m (m=0: oct-26)
@@ -113,7 +120,7 @@ def correr(scn, est):
             if not dflt:
                 c = vn["AO29"] * 0.005 + sum(vn[k] * POS[k]["c"] / 100 / 2 for k in LARGOS if m % 6 == 3)
                 flujo += c; acum["cupones"] += c
-            elif m > CANJE_M and (m - CANJE_M) % 6 == 0:
+            elif m > args.canje_m and (m - args.canje_m) % 6 == 0:
                 c = sum(vn.values()) * (1 - args.quita / 100) * args.cupon_nuevo / 100 / 2
                 flujo += c; acum["cupones"] += c
             for _, monto, cf, vm in NOTAS:
@@ -130,7 +137,13 @@ def correr(scn, est):
                     for k in LARGOS: vn[k] *= 1 - frac
                     vendido = obj; flujo += v; acum["venta_largos"] += v
             # capital nuevo
-            ap_ = APORTES.get(m, 0) if est != "N" else 0
+            if est == "X":                                 # lo que Ivo hizo en la realidad (cocos_aportes_reales.json)
+                for it in REAL.get(fecha(m), []):
+                    acum["aportes"] += it["monto"]; x = it["monto"] * (1 + (args.gap if it.get("canje", True) else 0) / 100)
+                    if it["destino"] == "repagar": flujo += x
+                    elif it["destino"] == "ao29": vn["AO29"] += x / (px("AO29", m, scn) / 100); acum["compra_ao29"] += x
+                    else: fondo += x
+            ap_ = APORTES.get(m, 0) if est not in ("N", "X") else 0
             if ap_:
                 acum["aportes"] += ap_; x = ap_ * (1 + args.gap / 100)
                 if est == "R": flujo += x

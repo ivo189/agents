@@ -196,6 +196,10 @@ aportes de Ivo. Incluye: apalancamiento hoy, capital requerido para cada objetiv
 país y menú de activos. La brecha MEP/CCL (~5-6%) se captura al canjear cable a MEP y vale igual para A y B. Pendientes de datos: reglas de margen de Cocos,
 costo real del canje, tickers/TIR de las ON (el listado de IOL no trae TIR ni duration).
 
+**La estrategia de Cocos NO va en el email semanal** (decisión de Ivo, nov-2026). Se trabaja a demanda: Ivo cuenta en el chat qué hizo en la realidad
+(si aportó o no, cuánto y a dónde); Claude lo agrega a `cocos_aportes_reales.json` y corre `proyeccion_cocos.py --real cocos_aportes_reales.json`
+(estrategia X, "Lo que hiciste") junto a las tres decisiones de referencia. `scripts/estrategia_semanal.py` queda como herramienta a demanda.
+
 Proyección solo de Cocos (bajo demanda): `scripts/proyeccion_cocos.py --previa 800|1000|1200 [--recovery 0.40] --json` + `scripts/informe_proyeccion_cocos.py`
 (3 escenarios: Milei reelecto RP 200, Oposición con shock, Reestructuración; 4 alternativas para 130 mil de capital nuevo nov-26 a mar-27:
 Nada, Repagar caución, Fondo USD 4,5 %, AO29 si RP>700; los flujos de la cuenta siempre repagan caución).
@@ -205,14 +209,12 @@ Nada, Repagar caución, Fondo USD 4,5 %, AO29 si RP>700; los flujos de la cuenta
 ### Estrategia vigente de Cocos (decidida por Ivo, nov-2026)
 - Objetivo: bajar la caución con capital nuevo (aportes + cupones, canje cable->MEP sin comisión) para recuperar capacidad de compra a 2,0x y, mientras, no vender bonos AR a precios golpeados (`scripts/cocos_estrategia.py`, estrategia E1 'Repagar todo').
 - **Regla de venta escalonada de largos (AL35, AE38, AL41, GD46, GD29), acumulada sobre la posición de hoy y decidida por Ivo: riesgo país (BondTerminal) <= 600 pb vende 25 %; <= 500 pb llega a 50 %; <= 400 pb llega a 100 %.** Lo producido repaga caución. Sin vender hasta 600. **Rige solo antes de la elección (hasta sep-2027)**: después, con el escenario despejado, no se vende (los bonos se pagan o se canjean). `regla_venta()` calcula el efecto estático.
-- Cada viernes, en la sección de Cartera Cocos, informá: riesgo país actual, distancia al próximo escalón (600/500/400), y si se cumple el disparador, un aviso destacado al inicio del email con lo que produciría la venta (valor de los largos a precio actual y apalancamiento resultante).
 
 ## Formato del email (htmlBody, tablas simples, sin JS)
 1. Titular: 2-3 líneas con lo más importante.
 2. Notas: tabla resumen, riesgos, volumen, próximas fechas.
 3. Curva AR: tabla de bonos (precio, var, TIR, paridad, volumen), pendiente/riesgo país, lectura.
 4. Cartera Cocos: pesos, TIR/duration ponderada, concentración, antigüedad del dato.
-4a. **Estrategia Cocos esta semana** (bloque fijo de 5 líneas): ejecutar `python3 -I scripts/estrategia_semanal.py --rp <riesgo país> --lev <apalancamiento Cocos> --caucion <caución USD> [--vendido <fracción de largos ya vendida>] --html` y pegar el resultado. Si hay DISPARADOR ACTIVO, repetirlo como aviso destacado en el titular.
 4b. Dónde alocar futuros ahorros (Parte 5).
 4c. Serie de apalancamiento (Parte 6): tabla de 12 semanas + link a la planilla.
 4d. Proyección de largo plazo (Parte 7): real vs proyectado, riesgo-retorno, link a las gráficas.
