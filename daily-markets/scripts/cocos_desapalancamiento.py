@@ -12,7 +12,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--gap", type=float, default=5.5)        # % neto de captura al canjear cable->MEP: ~6% bruto (AL30C/AL30D) menos ~0,5 de spread; Cocos no cobra comisión por el canje (Ivo, 6-nov-26)
 ap.add_argument("--ao27-tir", type=float, default=4.09)  # TIR MEP AO27 (BondTerminal 6-nov-26)
 ap.add_argument("--on-tir", type=float, default=4.6)     # TIR MEP de ON Pampa corta (MGCN 4,57% / MGCT 4,61%), ver scripts/on_pampa.py
-ap.add_argument("--caucion-tasa", type=float, default=0.5)
+ap.add_argument("--caucion-tasa", type=float, default=1.5)   # 0,5 % de mercado + 1 pp de comisión de Cocos
 ap.add_argument("--json", action="store_true")
 a = ap.parse_args()
 

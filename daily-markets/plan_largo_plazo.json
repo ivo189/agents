@@ -23,7 +23,8 @@
   },
   "parametros": {
     "tbill_tna": 4.1,
-    "caucion_tna": 0.5,
+    "caucion_tna": 1.5,
+    "caucion_nota": "0,5 % de mercado + 1 pp de comisión de Cocos (Ivo, nov-2026): sumar siempre 1 pp a la tasa de mercado",
     "ret_otros_anual": 6.0,
     "recupero_default": "precio implícito en el riesgo país (--recovery -1); estrés 0.40",
     "mes_eleccion": "2027-10",

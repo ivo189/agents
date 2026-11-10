@@ -37,7 +37,7 @@ def correr(vende_largos, diversifica, umbral=None):
             prod = sum(val[k] for k in LARGOS); caucion -= min(prod, caucion)
             for k in LARGOS: val[k] = 0.0
         G = sum(val.values()) + NOTAS + OTROS; N = G - caucion; lev = G / N if N > 0 else 99
-        flujo = cupones(m, not vende_largos) - caucion * 0.005 / 12
+        flujo = cupones(m, not vende_largos) - caucion * 0.015 / 12   # 0,5 % + 1 pp de comisión de Cocos
         rep = min(flujo, caucion); caucion -= rep; noc += flujo - rep
         if diversifica and lev <= umbral: noc += aporte(m)                       # va a activos no-AR, sin canje
         else:

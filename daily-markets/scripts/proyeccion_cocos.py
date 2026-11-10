@@ -29,7 +29,8 @@ ap.add_argument("--s1", type=float, default=200)
 ap.add_argument("--s2-peak", type=float, default=1600); ap.add_argument("--s2-hold", type=int, default=6); ap.add_argument("--s2-end", type=float, default=900)
 ap.add_argument("--gap", type=float, default=5.6, help="captura neta del canje cable->MEP (%%)")
 ap.add_argument("--fondo", type=float, default=4.5, help="rendimiento anual del fondo conservador USD de Cocos (%%)")
-ap.add_argument("--caucion-tasa", type=float, default=0.5)
+ap.add_argument("--caucion-tasa", type=float, default=0.5, help="tasa de mercado de la caución USD (TNA %%)")
+ap.add_argument("--comision-caucion", type=float, default=1.0, help="comisión de Cocos sobre la caución (pp); costo = tasa + comisión")
 ap.add_argument("--umbral-ao29", type=float, default=700)
 ap.add_argument("--sin-regla", action="store_true")
 ap.add_argument("--json", action="store_true")
@@ -107,7 +108,7 @@ def correr(scn, est):
         flujo = 0.0
         if m > 0:
             r = fondo * ((1 + args.fondo / 100) ** (1 / 12) - 1); fondo += r; acum["rend_fondo"] += r
-            i = caucion * args.caucion_tasa / 100 / 12; acum["interes_caucion"] += i; flujo -= i
+            i = caucion * (args.caucion_tasa + args.comision_caucion) / 100 / 12; acum["interes_caucion"] += i; flujo -= i
             if not dflt:
                 c = vn["AO29"] * 0.005 + sum(vn[k] * POS[k]["c"] / 100 / 2 for k in LARGOS if m % 6 == 3)
                 flujo += c; acum["cupones"] += c

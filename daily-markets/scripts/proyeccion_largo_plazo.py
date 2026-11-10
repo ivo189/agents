@@ -13,7 +13,7 @@ import json, argparse
 ap = argparse.ArgumentParser()
 ap.add_argument("--recovery", type=float, default=-1)         # -1 = precio implicito en el riesgo pais del escenario; 0.40 = estres
 ap.add_argument("--ret-otros", type=float, default=6.0)       # retorno anual esperado de lo que no es Cocos (Citi, HSBC, IBKR); 6% = igual al 60/40
-ap.add_argument("--caucion-tasa", type=float, default=0.5)
+ap.add_argument("--caucion-tasa", type=float, default=1.5)   # 0,5 % de mercado + 1 pp de comisión de Cocos
 ap.add_argument("--tbill", type=float, default=4.1)
 ap.add_argument("--ret-acc", type=float, default=7.0)         # retorno esperado renta variable USA (anual %)
 ap.add_argument("--ret-rf", type=float, default=4.5)          # retorno esperado renta fija USA (anual %)
