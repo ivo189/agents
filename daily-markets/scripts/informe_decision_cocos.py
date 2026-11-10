@@ -160,7 +160,7 @@ def t_valuacion():
     for s in SC:
         for i, e in enumerate(BASE4):
             rr = R[s]["estrategias"][e]
-            t += f'<tr>{f"<td rowspan=4>{s}</td>" if i == 0 else ""}<td class="l">{NOM[e]}</td>' + "".join(f'<td class="n">{k_(rr[m]["ar"])}</td><td class="n">{k_(rr[m]["fondo"])}</td><td class="n">{k_(rr[m]["caucion"])}</td><td class="n"><b>{k_(rr[m]["neto"])}</b></td>' for m, _ in hit) + '</tr>'
+            t += f'<tr>{f"<td rowspan=4 class=l>{SCN[s]}</td>" if i == 0 else ""}<td class="l">{NOM[e]}</td>' + "".join(f'<td class="n">{k_(rr[m]["ar"])}</td><td class="n">{k_(rr[m]["fondo"])}</td><td class="n">{k_(rr[m]["caucion"])}</td><td class="n"><b>{k_(rr[m]["neto"])}</b></td>' for m, _ in hit) + '</tr>'
     return t + '</table>'
 
 def t_flujos():
@@ -170,7 +170,7 @@ def t_flujos():
     for s in SC:
         for i, e in enumerate(BASE4):
             f = R[s]["estrategias"][e][36]
-            t += f'<tr>{f"<td rowspan=4>{s}</td>" if i == 0 else ""}<td class="l">{NOM[e]}</td>' + "".join(f'<td class="n">{k_(f[k]) if f[k] else "–"}</td>' for k, _ in cols) + f'<td class="n">{k_(f["caucion"])}</td></tr>'
+            t += f'<tr>{f"<td rowspan=4 class=l>{SCN[s]}</td>" if i == 0 else ""}<td class="l">{NOM[e]}</td>' + "".join(f'<td class="n">{k_(f[k]) if f[k] else "–"}</td>' for k, _ in cols) + f'<td class="n">{k_(f["caucion"])}</td></tr>'
     return t + '</table>'
 
 def t_sens(ests):
@@ -194,11 +194,17 @@ cob = {e: cobertura("S3", e)[2] for e in ALL}
 salto = pc.px("AO29", 12, ESC["S1"]) - pc.px("AO29", 11, ESC["S1"])
 r0 = row("S1", "N", 0)
 
-proposito = f'''<p><b>Para qué es este análisis.</b> La cartera de Cocos quedó invertida en bonos argentinos comprados a paridades más altas que las actuales (por ejemplo, el AO29 se compró a {c1(a.compra_ao29)} y hoy cotiza a {c1(P_AO)}: unos {k_(PERD_AO)} de pérdida no realizada solo en ese bono) y está financiada con caución. El devengamiento juega a favor: la cartera rinde una TIR promedio de {c1(TIR)} % (unos {k_(DEV)} por año sobre el valor de mercado) contra una caución de {c1(P["caucion_tasa"])} % ({k_(CAU_COSTO)} por año). Pero la sensibilidad al riesgo político es alta: con una duration de {c1(DUR)}, cada 100 pb de suba del riesgo país le saca unos {k_(DV100)} al valor de la cartera, y la elección de octubre de 2027 abre futuros muy distintos.</p>
+proposito = f'''<p>La cartera de Cocos quedó invertida en bonos argentinos comprados a paridades más altas que las actuales (por ejemplo, el AO29 se compró a {c1(a.compra_ao29)} y hoy cotiza a {c1(P_AO)}: unos {k_(PERD_AO)} de pérdida no realizada solo en ese bono) y está financiada con caución. El devengamiento juega a favor: la cartera rinde una TIR promedio de {c1(TIR)} % (unos {k_(DEV)} por año sobre el valor de mercado) contra una caución de {c1(P["caucion_tasa"])} % ({k_(CAU_COSTO)} por año). Pero la sensibilidad al riesgo político es alta: con una duration de {c1(DUR)}, cada 100 pb de suba del riesgo país le saca unos {k_(DV100)} al valor de la cartera, y la elección de octubre de 2027 abre futuros muy distintos.</p>
 <p>El objetivo es ayudarte a decidir cómo administrar esa cartera hasta oct-29, cuando vence el AO29. La decisión tiene dos niveles:</p>
 <ol><li><b>Poner o no capital nuevo.</b> Una posibilidad es no hacer nada y dejar que el devengamiento y los cupones vayan bajando la caución. La otra es aportar hasta 130 mil entre nov-26 y mar-27 (15 + 15 + 70 + 15 + 15).</li>
 <li><b>Si se pone, dónde:</b> repagar caución, un fondo USD dentro de Cocos, o más AO29.</li></ol>
-<p>Para cada combinación se proyecta la cartera mes a mes en tres escenarios electorales y tres caminos de riesgo país antes de la elección.</p>'''
+<p>Para responder, el informe sigue este orden:</p>
+<ol><li><b>Punto de partida y premisas</b>: la cartera de hoy y las reglas que valen en todos los casos.</li>
+<li><b>Escenarios</b>: qué puede pasar con el riesgo país antes y después de la elección, y cómo se valúan los bonos en cada caso.</li>
+<li><b>Alternativas</b>: qué hacer con la cartera y con el capital nuevo.</li>
+<li><b>Resultados y proyección en el tiempo</b>: cada alternativa en cada escenario, mes a mes hasta oct-29.</li>
+<li><b>Pros y contras, trade-offs y sensibilidades</b>.</li>
+<li><b>Conclusiones y qué mirar</b>.</li></ol>'''
 
 resumen = f'''<ul class="key">
 <li><b>No hacer nada es viable si se paga la deuda, pero deja la cartera expuesta.</b> Con Milei o con la oposición, Nada termina unos {k_(-(d("S1","N","F")+d("S2","N","F"))/2)} debajo del fondo, y si los 130 mil quedan afuera en T-bills la diferencia baja a {k_(-d("S1","T","F"))}. El costo es el camino: apalancamiento de {x2(row("S1","N",11)["lev"])} en la previa y, en una reestructuración, neto de Cocos de {k_(nmin("S3","N"))} y {k_(cob["N"])} para cubrir el margen.</li>
@@ -209,19 +215,29 @@ resumen = f'''<ul class="key">
 
 esc_txt = f'''
 <div class="card"><h4>Milei reelecto</h4><p>El riesgo país pasa de ~1.000 a <b>{int(P["s1"])} pb</b> en oct-27. El AO29 sube de {c1(pc.px("AO29",11,ESC["S1"]))} a {c1(pc.px("AO29",12,ESC["S1"]))} y los largos de ~64 a ~90. Se cumplen los tres escalones de la regla (600/500/400 pb) y se venden todos los largos por unos {k_(row("S1","N",36)["venta_largos"])}, que repagan caución. El AO29 vence en oct-29 y la caución termina en cero.</p>
-<p><b>Qué decide el resultado:</b> cuánto AO29 tenías antes de la elección. Cada 100 mil en AO29 comprados en el verano terminan unos {k_(d("S1","A","F")/row("S1","A",36)["compra_ao29"]*100000)} arriba del fondo.</p></div>
+<p><b>Qué pesa:</b> cuánto AO29 tenés el día de la elección, porque en ese mes sube {c1(salto)} puntos. Después solo queda el carry hasta el vencimiento.</p></div>
 <div class="card"><h4>Oposición con shock</h4><p>El riesgo país salta a <b>{int(P["s2_peak"])} pb</b> por {P["s2_hold"]} meses y baja a {int(P["s2_end"])} en oct-29; la deuda se paga. El AO29 cae a {c1(pc.px("AO29",12,ESC["S2"]))}, pero al ser corto vuelve a 100 al vencer. Los largos caen a ~51 y terminan en ~{c1(pc.px("AL35",36,ESC["S2"]))}. No se activa la regla de venta.</p>
-<p><b>Qué decide el resultado:</b> como en Milei, el AO29 gana porque vence a la par; el shock pesa en el camino (apalancamiento de Cocos en oct-27: {x2(row("S2","N",12)["lev"])} con Nada, {x2(row("S2","F",12)["lev"])} con el fondo, {x2(row("S2","R",12)["lev"])} repagando).</p></div>
+<p><b>Qué pesa:</b> el AO29 se recupera porque vence a la par en oct-29; el shock se siente en el camino. La cartera de hoy, sin aportes, pasaría de {x2(row("S2","N",11)["lev"])} de apalancamiento en sep-27 a {x2(row("S2","N",12)["lev"])} en oct-27.</p></div>
 <div class="card"><h4>Reestructuración (canje)</h4><p>Riesgo país a 2.000 pb en oct-27, default en dic-27, canje en jun-28 por un bono nuevo con quita del {int(P["quita"])} % del nominal, cupón {c1(P["cupon_nuevo"])} % y vencimiento 2035. Desde la elección cada bono vale unos {c1(pc.px("AO29",12,ESC["S3"]))} centavos y sube a {c1(pc.px("AO29",36,ESC["S3"]))} en oct-29 a medida que el riesgo país baja a {int(P["s3_end"])} pb y vuelven los cupones.</p>
-<p><b>Qué decide el resultado:</b> cuánto expuesto a bonos AR estás el día de la elección. La cartera pierde ~{k_(row("S3","N",11)["ar"]-row("S3","N",12)["ar"])} en un mes; con Nada y con AO29 el neto de Cocos queda negativo y hay que cubrir el margen.</p></div>'''
+<p><b>Qué pesa:</b> cuánto expuesto a bonos AR estás el día de la elección. La cartera de hoy pierde ~{k_(row("S3","N",11)["ar"]-row("S3","N",12)["ar"])} en un mes y, sin capital adicional, el neto de Cocos queda en {k_(row("S3","N",12)["neto"])}: hay que cubrir el margen.</p></div>'''
 
-alt_txt = f'''<table><tr><th>Alternativa</th><th>Qué hace</th><th>A favor</th><th>En contra</th></tr>
-<tr><td class="l">Nada</td><td>No entra capital; cupones y vencimientos van bajando la caución.</td><td>No compromete dólares nuevos en Argentina. Los 130 mil pueden quedar afuera rindiendo ({k_(TB)} en T-bills a oct-29) y disponibles para cubrir margen. Si se paga la deuda, termina cerca de las otras.</td><td>Apalancamiento alto todo el camino ({x2(row("S1","N",11)["lev"])} en sep-27) y sin capacidad de compra. En la reestructuración el neto de Cocos va a {k_(nmin("S3","N"))} y necesitás {k_(cob["N"])} para volver a 3x.</td></tr>
-<tr><td class="l">Repagar caución</td><td>Canje (+{c1(P["gap"])} %) y repago.</td><td>El menor apalancamiento y la mayor capacidad de compra a 2x ({k_(row("S1","R",5)["capacidad_2x"])} en mar-27). Menos cobertura en la reestructuración ({k_(cob["R"])}).</td><td>La que menos rinde de las que ponen capital: la plata gana el {c1(P["caucion_tasa"])} % de la caución. No se deshace.</td></tr>
-<tr><td class="l">Fondo USD</td><td>Canje y fondo conservador de Cocos ({c1(P["fondo"])} %).</td><td>La mejor en la reestructuración y la que menos cobertura necesita ({k_(cob["F"])}). Líquida: puede repagar caución o comprar bonos cuando quieras. Baja la concentración en AO29.</td><td>Apalancamiento contable más alto que repagar ({x2(row("S1","F",11)["lev"])} en sep-27). Deja pasar la suba de la elección si gana Milei.</td></tr>
-<tr><td class="l">AO29 si RP&gt;700</td><td>Canje y compra de AO29.</td><td>La mejor si se paga ({sk(d("S1","A","F"))} contra el fondo). TIR ~{c1(pc.BONOS["AO29"][2])} % y cupón mensual que repaga caución.</td><td>La peor en la reestructuración ({sk(d("S3","A","F"))} contra el fondo). AO29 llega al {100*row("S1","A",5)["ao29"]/row("S1","A",5)["bruto"]:.0f} % de los activos de Cocos; necesita {k_(cob["A"])} de cobertura.</td></tr>
-<tr><td class="l">Mitad fondo, mitad AO29 <span class="tag">variante</span></td><td>65 mil a cada uno.</td><td>Captura la mitad de la suba si se paga y conserva liquidez.</td><td>Pierde la mitad en la reestructuración; necesita {k_(cob["M"])} de cobertura.</td></tr>
-<tr><td class="l">Fondo → repago en sep-27 <span class="tag">variante</span></td><td>Fondo hasta sep-27; ahí repaga caución.</td><td>Le gana a repagar desde el principio en los tres escenarios ({sk(d("S1","P","R"))}) con la misma protección en la elección.</td><td>Pierde contra quedarse en el fondo ({sk(d("S3","P","F"))} en la reestructuración): si cubrís margen con dólares de afuera, repagar no agrega valor.</td></tr>
+alt_def = f'''<table><tr><th>Alternativa</th><th>Qué hace con el capital nuevo</th><th>Qué busca</th></tr>
+<tr><td class="l">Nada</td><td>No se aporta. La cartera sigue igual; cupones y vencimientos van bajando la caución.</td><td>No sumar dólares a Argentina y dejar que el devengamiento haga el trabajo.</td></tr>
+<tr><td class="l">Nada, con los 130 mil en T-bills afuera <span class="tag">para comparar</span></td><td>Igual que Nada en Cocos; el calendario de aportes queda en T-bills afuera ({c1(a.tbill)} %), sin canje.</td><td>Compararla justo: esa plata rinde en otro lado y está disponible para cubrir margen.</td></tr>
+<tr><td class="l">Repagar caución</td><td>Se canjea cable a MEP y repaga caución.</td><td>Bajar el apalancamiento lo más rápido posible y recuperar capacidad de compra.</td></tr>
+<tr><td class="l">Fondo USD</td><td>Se canjea y va al fondo conservador USD de Cocos ({c1(P["fondo"])} % anual).</td><td>Cobrar más que el costo de la caución sin sumar riesgo AR, con liquidez para decidir más adelante.</td></tr>
+<tr><td class="l">AO29 si RP&gt;{int(P["umbral_ao29"])}</td><td>Se canjea y compra AO29 a precio de mercado mientras el riesgo país esté arriba de {int(P["umbral_ao29"])} pb; si no, va al fondo.</td><td>Aprovechar la TIR alta (~{c1(pc.BONOS["AO29"][2])} %) y la suba si el riesgo país baja.</td></tr>
+<tr><td class="l">Mitad fondo, mitad AO29 <span class="tag">variante</span></td><td>65 mil a cada uno.</td><td>Un punto medio entre las dos anteriores.</td></tr>
+<tr><td class="l">Fondo → repago en sep-27 <span class="tag">variante</span></td><td>Fondo hasta sep-27; ahí el fondo repaga caución.</td><td>Cobrar el fondo hasta la previa y llegar a la elección con menos caución.</td></tr>
+</table>'''
+
+alt_txt = f'''<table><tr><th>Alternativa</th><th>A favor</th><th>En contra</th></tr>
+<tr><td class="l">Nada</td><td>No compromete dólares nuevos en Argentina. Los 130 mil pueden quedar afuera rindiendo ({k_(TB)} en T-bills a oct-29) y disponibles para cubrir margen. Si se paga la deuda, termina cerca de las otras.</td><td>Apalancamiento alto todo el camino ({x2(row("S1","N",11)["lev"])} en sep-27) y sin capacidad de compra. En la reestructuración el neto de Cocos va a {k_(nmin("S3","N"))} y necesitás {k_(cob["N"])} para volver a 3x.</td></tr>
+<tr><td class="l">Repagar caución</td><td>El menor apalancamiento y la mayor capacidad de compra a 2x ({k_(row("S1","R",5)["capacidad_2x"])} en mar-27). Menos cobertura en la reestructuración ({k_(cob["R"])}).</td><td>La que menos rinde de las que ponen capital: la plata gana el {c1(P["caucion_tasa"])} % de la caución. No se deshace.</td></tr>
+<tr><td class="l">Fondo USD</td><td>La mejor en la reestructuración y la que menos cobertura necesita ({k_(cob["F"])}). Líquida: puede repagar caución o comprar bonos cuando quieras. Baja la concentración en AO29.</td><td>Apalancamiento contable más alto que repagar ({x2(row("S1","F",11)["lev"])} en sep-27). Deja pasar la suba de la elección si gana Milei.</td></tr>
+<tr><td class="l">AO29 si RP&gt;700</td><td>La mejor si se paga ({sk(d("S1","A","F"))} contra el fondo). TIR ~{c1(pc.BONOS["AO29"][2])} % y cupón mensual que repaga caución.</td><td>La peor en la reestructuración ({sk(d("S3","A","F"))} contra el fondo). AO29 llega al {100*row("S1","A",5)["ao29"]/row("S1","A",5)["bruto"]:.0f} % de los activos de Cocos; necesita {k_(cob["A"])} de cobertura.</td></tr>
+<tr><td class="l">Mitad fondo, mitad AO29 <span class="tag">variante</span></td><td>Captura la mitad de la suba si se paga y conserva liquidez.</td><td>Pierde la mitad en la reestructuración; necesita {k_(cob["M"])} de cobertura.</td></tr>
+<tr><td class="l">Fondo → repago en sep-27 <span class="tag">variante</span></td><td>Le gana a repagar desde el principio en los tres escenarios ({sk(d("S1","P","R"))}) con la misma protección en la elección.</td><td>Pierde contra quedarse en el fondo ({sk(d("S3","P","F"))} en la reestructuración): si cubrís margen con dólares de afuera, repagar no agrega valor.</td></tr>
 </table>'''
 
 trade = f'''
@@ -252,7 +268,8 @@ senales = f'''<ul>
 lv0, lv1 = rango("lev"); n0, n1 = rango("neto"); nm0, nm1 = rango("neto_menos_aportes")
 temporal = ('<div class="leg">' + "".join(f'<span class="lg"><svg width="30" height="10"><line x1="0" x2="30" y1="5" y2="5" stroke="var(--text)" stroke-width="2"{(" stroke-dasharray=" + chr(34) + dd + chr(34)) if dd else ""}/></svg>Previa: {l}</span>' for l, dd in (("baja a 800", ""), ("sube a 1.000", "7 4"), ("sube a 1.200", "2 3"))) + '</div><div class="grid3">'
             + "".join(panel(SCN[s], [(k, f"Previa {k}", "var(--text)", dd, V[k][s]["rp_path"]) for k, dd in (("800", ""), ("1000", "7 4"), ("1200", "2 3"))], "rp", 0, 2200, labels=False) for s in SC) + '</div>')
-temporal = ('<h4>Riesgo país supuesto (pb)</h4><p class="desc">Desde 938 pb (BondTerminal, 6/11/2026). Tres previas hasta sep-27; en oct-27 cada escenario salta a su nivel.</p>' + temporal + leg
+rp_chart = temporal
+temporal = (leg
             + bloque("Apalancamiento de Cocos (activos / neto)", "1,0x = sin caución. Eje recortado en 5x; la línea se corta cuando el neto es negativo.", "lev", "lev", 1.0, min(round(lv1 + 0.2, 1), 5.0))
             + bloque("Caución (USD)", "Lo que queda por devolver. Baja con el capital nuevo (solo en Repagar), los cupones, los vencimientos y la venta de largos.", "caucion", "usd", 0, 500000)
             + bloque("Patrimonio neto de Cocos (activos a precio de mercado − caución, USD)", "Incluye el capital aportado. Por debajo de cero, la cuenta no cubre la caución y hay que inyectar.", "neto", "usd", math.floor(n0 / 100000) * 100000, round(n1 / 100000 + 1) * 100000)
@@ -277,43 +294,59 @@ table{{border-collapse:collapse;font-size:12px;margin:8px 0;display:block;overfl
 .tag{{font-size:10px;border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--muted)}}details{{margin:10px 0}}summary{{cursor:pointer;font-weight:bold}}
 </style></head><body><main>
 <h1>Cocos · cómo administrar la cartera hasta oct-2029</h1>
-<p class="desc">Escenarios, alternativas y trade-offs. Proyección mensual nov-26 a oct-29 (vence el AO29). Gráficos y tablas con la previa que sube a 1.000 pb, salvo que se indique otra. Sin margin call: si el neto de Cocos queda negativo, cubrís el margen con dólares de afuera y el informe dice cuánto.</p>
+<p class="desc">Escenarios, alternativas y trade-offs. Proyección mensual de nov-26 a oct-29, cuando vence el AO29.</p>
+<h2>1. Para qué es este análisis</h2>
 {proposito}
 
-<h2>En pocas palabras</h2>{resumen}
-{barras(ALL, "Resultado en oct-29: neto de Cocos menos capital aportado (USD)")}
-
-<h2>1. Punto de partida</h2>
+<h2>2. Punto de partida y premisas</h2>
 <table><tr><th>Bonos AR</th><th>de los cuales AO29</th><th>Largos (AL35, AE38, AL41, GD46, GD29)</th><th>Notas</th><th>Efectivo</th><th>Activos</th><th>Caución</th><th>Neto</th><th>Apalancamiento</th><th>TIR promedio</th><th>Duration</th></tr>
 <tr><td class="n">{k_(r0["ar"])}</td><td class="n">{k_(r0["ao29"])}</td><td class="n">{k_(r0["largos"])}</td><td class="n">{k_(r0["notas"])}</td><td class="n">{k_(r0["fondo"])}</td><td class="n">{k_(r0["bruto"])}</td><td class="n">{k_(r0["caucion"])}</td><td class="n">{k_(r0["neto"])}</td><td class="n"><b>{x2(r0["lev"])}</b></td><td class="n">{c1(TIR)} %</td><td class="n">{c1(DUR)}</td></tr></table>
-<p class="note">Posiciones del estado de Cocos del 31/10 a precios de BondTerminal del 6/11/2026 (MEP), riesgo país 938 pb. Caución USD {c1(P["caucion_tasa"])} % anual (variable).</p>
+<p class="note">Posiciones del estado de Cocos del 31/10 a precios de BondTerminal del 6/11/2026 (MEP), riesgo país 938 pb.</p>
+<p><b>Premisas que valen en todos los casos:</b></p>
+<ul>
+<li>Caución USD al {c1(P["caucion_tasa"])} % anual (variable; en sensibilidades, 2 %).</li>
+<li>Todo flujo de la cuenta (cupones, vencimientos de las notas, ventas de bonos) repaga caución; cuando la caución llega a cero, el excedente va al fondo USD.</li>
+<li>Regla de venta escalonada de los bonos largos (AL35, AE38, AL41, GD46, GD29), decidida por vos: con riesgo país en 600 pb se vende el 25 %, en 500 pb el 50 % y en 400 pb el 100 %; lo producido repaga caución.</li>
+<li>El capital que entra desde afuera se canjea cable a MEP con una captura del {c1(P["gap"])} %, sin comisión.</li>
+<li>Sin margin call: si el neto de Cocos queda negativo, cubrís el margen con dólares de afuera. El informe muestra cuánto haría falta.</li>
+<li>La medida para comparar alternativas es el <b>neto de Cocos en oct-29 menos el capital aportado</b>, para no premiar a las que ponen más plata.</li>
+</ul>
 
-<h2>2. Los escenarios</h2>
+<h2>3. Los escenarios</h2>
+<p>Cada escenario combina dos cosas: <b>el camino del riesgo país antes de la elección</b> (la “previa”, de nov-26 a sep-27) y <b>el resultado de la elección</b> de oct-27, que fija el riesgo país de ahí en adelante.</p>
+<p><b>Previas</b> (comunes a los tres resultados): baja a 800 pb en mar-27; sube a 1.000 pb en sep-27; sube a 1.200 pb en sep-27. Salvo que se indique otra cosa, el informe usa la previa que <b>sube a 1.000</b>, la más cercana al nivel actual.</p>
+<p><b>Resultados de la elección:</b></p>
 <div class="cards">{esc_txt}</div>
+<h4>Riesgo país supuesto (pb)</h4>{rp_chart}
 <h4>Precios supuestos</h4>{t_precios()}
 
-<h2>3. Las alternativas</h2>
-<p>Si se pone capital, el calendario es 15 mil en nov-26 y dic-26, 70 mil en ene-27, 15 mil en feb-27 y mar-27; entra desde afuera y se canjea cable a MEP (+{c1(P["gap"])} %). En todas las alternativas, los flujos de la cuenta (cupones, vencimientos de notas, venta escalonada de largos) repagan caución.</p>
-{alt_txt}
+<h2>4. Las alternativas</h2>
+<p>Si se aporta capital, el calendario es 15 mil en nov-26 y dic-26, 70 mil en ene-27, 15 mil en feb-27 y mar-27 (130 mil en total).</p>
+{alt_def}
 
-<h2>4. Resultados</h2>
+<h2>5. Resultados</h2>
+{barras(ALL, "Resultado en oct-29: neto de Cocos menos capital aportado (USD)")}
 <h4>Neto de Cocos en oct-29 menos capital aportado</h4>{t_matriz(ALL)}
 <h4>El camino hasta la elección</h4>{t_camino(tuple(e for e in ALL if e != "T"))}
 <h4>Reestructuración: el escenario que separa a las alternativas</h4>{t_s3(ALL)}
 
-<h2>5. Proyección en el tiempo</h2>
+<h2>6. Proyección en el tiempo</h2>
 <p class="desc">Las cuatro alternativas principales en cada escenario. Pasá el cursor por un gráfico para ver los valores de cada mes.</p>
 {temporal}
 <h4>Valuación de la cartera por hito (USD)</h4>{t_valuacion()}
 <h4>Flujos acumulados nov-26 a oct-29 (USD)</h4><p class="desc">Lo que entró y salió de la cuenta, aparte del capital nuevo.</p>{t_flujos()}
 
-<h2>6. Trade-offs</h2>{trade}
+<h2>7. Pros y contras de cada alternativa</h2>{alt_txt}
 
-<h2>7. Sensibilidades</h2>{t_sens(ALL)}
+<h2>8. Trade-offs</h2>{trade}
+
+<h2>9. Sensibilidades</h2>{t_sens(ALL)}
 <h4>Según la previa</h4>{t_previa(ALL)}
 <p class="note">La previa cambia el camino pero casi no el resultado final, porque en la elección los bonos se revalúan al nivel de cada escenario.</p>
 
-<h2>8. Qué mirar y cuándo decidir</h2>{senales}
+<h2>10. Conclusiones</h2>{resumen}
+
+<h2>11. Qué mirar y cuándo decidir</h2>{senales}
 
 <h2>Supuestos y límites</h2>
 <p class="note">AO29: cupón 6 % pagado 0,5 % por mes, vence oct-29; comprado a {c1(a.compra_ao29)} (dato de Ivo). Largos: bonos sintéticos calibrados a precio y duration de BondTerminal, cupón semestral. TIR = UST + spread proporcional al riesgo país. Reestructuración: desde la elección, cada bono vale el {100-int(P["quita"])} % del precio del bono nuevo (cupón {c1(P["cupon_nuevo"])} %, 2035) a TIR UST + riesgo país. Notas (70 mil) con cupones y capital al par, sin barreras. “Nada + T-bills afuera”: los aportes del calendario quedan en T-bills al {c1(a.tbill)} %, sin canje. Sin margin call; las inyecciones de cobertura se informan, no se simulan. Umbrales de probabilidad con Milei y oposición con el mismo peso. Modelo de escenarios, no predicción; no es asesoramiento financiero.</p>
