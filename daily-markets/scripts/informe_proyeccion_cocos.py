@@ -164,7 +164,7 @@ lv0, lv1 = rango("lev"); nm0, nm1 = rango("neto_menos_aportes"); c0, c1 = rango(
 body = (rp_h + leg
         + bloque("Apalancamiento de Cocos (activos / neto)", "1,0x = sin caución. El salto de octubre de 2027 es la elección: los bonos se revalúan al nivel de riesgo país del escenario.", "lev", "lev", 1.0, round(lv1 + 0.2, 1))
         + bloque("Caución (USD)", "Lo que queda por devolver. Baja con el capital nuevo (solo en Repagar), los cupones, los vencimientos y la venta escalonada de largos.", "caucion", "usd", 0, 500000)
-        + bloque("Activos de Cocos valuados (USD)", "Bonos AR a precio de mercado + notas + fondo. Es lo que el escenario revalúa.", "bruto", "usd", int(b0 / 100000) * 100000, round(b1 / 100000 + 1) * 100000)
+        + bloque("Activos de Cocos valuados (USD)", "Bonos AR a precio de mercado + notas + fondo. Puede bajar aunque el patrimonio suba: cada cupón, vencimiento de nota o venta de largos sale de los activos para repagar caución (en Milei reelecto, la venta de los largos en oct-27 saca unos 205 mil de una vez). Para ver si se gana, mirar el neto.", "bruto", "usd", int(b0 / 100000) * 100000, round(b1 / 100000 + 1) * 100000)
         + bloque("Neto de Cocos menos capital aportado (USD)", "La medida justa para comparar: descuenta los 130 mil que entran en las tres alternativas con capital. La distancia a Nada es lo que ganó (o perdió) ese capital.", "neto_menos_aportes", "usd", int(nm0 / 100000) * 100000, round(nm1 / 100000 + 1) * 100000))
 
 page = f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proyección de Cocos</title>
