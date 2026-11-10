@@ -101,7 +101,7 @@ def panel(titulo, series, ymin, ymax):
         if ends[i][0] - ends[i-1][0] < 11: ends[i][0] = ends[i-1][0] + 11
     for y, lab, col in ends: g += f'<circle cx="{W-MR}" cy="{y:.1f}" r="3" fill="{col}"/><text x="{W-MR+5}" y="{y+3:.1f}" class="lab">{lab}</text>'
     data = {"ml": ML, "iw": iw, "s": [{"l": l, "c": c, "v": v} for l, c, v in series]}
-    return (f'<figure class="panel"><figcaption>{html.escape(titulo)}</figcaption><svg viewBox="0 0 {W} {H}" role="img" aria-label="{html.escape(titulo)}">{g}'
+    return (f'<figure class="panel pc"><figcaption>{html.escape(titulo)}</figcaption><svg viewBox="0 0 {W} {H}" role="img" aria-label="{html.escape(titulo)}">{g}'
             f'<line class="cross" y1="{MT}" y2="{MT+ih}" x1="0" x2="0" style="display:none"/><rect class="hit" x="{ML}" y="{MT}" width="{iw}" height="{ih}" fill="transparent"/></svg>'
             f'<div class="tip" style="display:none"></div><script type="application/json">{json.dumps(data)}</script></figure>')
 vals = [x["neto"] for k, _ in NIV for e in EST for x in S3(k, e)]
@@ -200,12 +200,20 @@ table{{border-collapse:collapse;font-size:12px;margin:8px 0;display:block;overfl
 </main>
 <script>
 var M={json.dumps(MESN)};
-document.querySelectorAll('figure.panel').forEach(function(f){{
+document.querySelectorAll('figure.pc').forEach(function(f){{
   var d=JSON.parse(f.querySelector('script').textContent),svg=f.querySelector('svg'),hit=f.querySelector('.hit'),cr=f.querySelector('.cross'),tip=f.querySelector('.tip'),n=d.s[0].v.length;
   hit.addEventListener('mousemove',function(e){{var r=svg.getBoundingClientRect(),sc=r.width/svg.viewBox.baseVal.width,x=(e.clientX-r.left)/sc;var i=Math.max(0,Math.min(n-1,Math.round((x-d.ml)/d.iw*(n-1))));var px=d.ml+d.iw*i/(n-1);cr.setAttribute('x1',px);cr.setAttribute('x2',px);cr.style.display='';
     tip.innerHTML='<b>'+M[i]+'</b><br>'+d.s.map(function(s){{return '<span style="color:'+s.c+'">●</span> '+s.l+': USD '+Math.round(s.v[i]/1000).toLocaleString('es-AR')+' mil';}}).join('<br>');tip.style.display='';tip.style.left=Math.min(r.width-180,Math.max(4,px*sc+8))+'px';}});
   hit.addEventListener('mouseleave',function(){{cr.style.display='none';tip.style.display='none';}});
 }});
 </script></body></html>'''
+# piezas para insertar este capítulo en el informe de decisión
+CHAPTER = page[page.index("<h2>1. Por qué este capítulo</h2>"):page.index("</main>")]
+JS = page[page.index("<script>", page.index("</main>")):page.index("</body>")]
+CSS_EXTRA = (":root{--o1:#86b6ef;--o2:#3987e5;--o3:#1c5cab;--o4:#0d366b;--neg:#e34948}"
+             "@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--o1:#1c5cab;--o2:#3987e5;--o3:#86b6ef;--o4:#cde2fb;--neg:#e66767}}"
+             ":root[data-theme=dark]{--o1:#1c5cab;--o2:#3987e5;--o3:#86b6ef;--o4:#cde2fb;--neg:#e66767}"
+             ".zero{stroke:var(--muted);stroke-width:1.2}.steps{list-style:none;padding:0}.steps li{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:8px}"
+             ".box{border-left:4px solid var(--neg);background:var(--card);padding:8px 12px;margin:10px 0}h3{font-size:15px;margin:22px 0 4px}")
 open(a.out, "w").write(page)
 print("ok", len(page))

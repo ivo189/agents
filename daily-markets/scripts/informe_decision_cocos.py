@@ -9,6 +9,7 @@ import json, argparse, os, sys, html, math, importlib.util
 ap = argparse.ArgumentParser(); ap.add_argument("--dir", required=True); ap.add_argument("--out", required=True)
 ap.add_argument("--tbill", type=float, default=4.1, help="tasa de T-bills para el capital que queda afuera en 'Nada'")
 ap.add_argument("--compra-ao29", type=float, default=95.0, help="precio de compra del AO29 (Ivo)")
+ap.add_argument("--peor-dir", default=None, help="carpeta con base/w1/w2/w3.json: agrega el capítulo del peor escenario (informe_peor_caso.py)")
 a = ap.parse_args()
 L = lambda f: json.load(open(os.path.join(a.dir, f)))
 B = L("pc_1000.json"); R = B["resultados"]; P = B["parametros"]; APO = {int(k): v for k, v in B["aportes"].items()}
@@ -18,6 +19,15 @@ argv, sys.argv = sys.argv, [sys.argv[0]]
 sp = importlib.util.spec_from_file_location("pc", os.path.join(os.path.dirname(os.path.abspath(__file__)), "proyeccion_cocos.py"))
 pc = importlib.util.module_from_spec(sp); sp.loader.exec_module(pc); sys.argv = argv
 ESC = pc.escenarios()
+PEOR_HTML = PEOR_JS = PEOR_CSS = ""
+if a.peor_dir:
+    import re
+    argv, sys.argv = sys.argv, [sys.argv[0], "--dir", a.peor_dir, "--out", os.devnull]
+    sp2 = importlib.util.spec_from_file_location("peor", os.path.join(os.path.dirname(os.path.abspath(__file__)), "informe_peor_caso.py"))
+    pk = importlib.util.module_from_spec(sp2); sp2.loader.exec_module(pk); sys.argv = argv
+    PEOR_HTML = re.sub(r"<h2>(\d)\. ([^<]*)</h2>", lambda m_: f"<h3>10.{m_.group(1)} {m_.group(2)}</h3>", pk.CHAPTER)
+    PEOR_HTML = PEOR_HTML.replace("<h3>10.1 Por qué este capítulo</h3>", "<h3>10.1 Por qué importa este escenario</h3>", 1)
+    PEOR_JS, PEOR_CSS = pk.JS, pk.CSS_EXTRA
 
 SC = ("S1", "S2", "S3"); BASE4 = ("N", "R", "A"); ALL = BASE4
 NOM = dict(B["estrategias"]); NOM["T"] = "Nada, con los 130 mil en T-bills afuera"
@@ -208,6 +218,7 @@ proposito = f'''<p>La cartera de Cocos quedó invertida en bonos argentinos comp
 <li><b>Las tres decisiones</b>: qué hace cada una.</li>
 <li><b>Resultados y proyección en el tiempo</b>: cada decisión en cada escenario, mes a mes hasta oct-29.</li>
 <li><b>Pros y contras, trade-offs y sensibilidades</b>.</li>
+<li><b>El peor escenario</b>: cómo se modela el default, qué tan grave puede ser y a qué precio se rompe la cuenta.</li>
 <li><b>Conclusiones y qué mirar</b>.</li></ol>'''
 
 resumen = f'''<ul class="key">
@@ -289,7 +300,7 @@ svg{{width:100%;height:auto;display:block}}.ax{{fill:var(--muted);font-size:10px
 .leg{{display:flex;flex-wrap:wrap;gap:14px;margin:8px 0}}.lg{{display:inline-flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap}}
 table{{border-collapse:collapse;font-size:12px;margin:8px 0;display:block;overflow-x:auto}}th,td{{border:1px solid var(--line);padding:4px 7px;text-align:center;vertical-align:top}}th{{background:var(--grid)}}td.n{{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}}td.l{{text-align:left}}
 .tag{{font-size:10px;border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--muted)}}details{{margin:10px 0}}summary{{cursor:pointer;font-weight:bold}}
-</style></head><body><main>
+{PEOR_CSS}</style></head><body><main>
 <h1>Cocos · cómo administrar la cartera hasta oct-2029</h1>
 <p class="desc">Escenarios, decisiones y trade-offs. Proyección mensual de nov-26 a oct-29, cuando vence el AO29.</p>
 <h2>1. Para qué es este análisis</h2>
@@ -341,9 +352,10 @@ table{{border-collapse:collapse;font-size:12px;margin:8px 0;display:block;overfl
 <h4>Según la previa</h4>{t_previa(ALL)}
 <p class="note">La previa cambia el camino pero casi no el resultado final, porque en la elección los bonos se revalúan al nivel de cada escenario.</p>
 
-<h2>10. Conclusiones</h2>{resumen}
+{"<h2>10. El peor escenario: default y canje</h2>" + PEOR_HTML if PEOR_HTML else ""}
+<h2>{11 if PEOR_HTML else 10}. Conclusiones</h2>{resumen}
 
-<h2>11. Qué mirar y cuándo decidir</h2>{senales}
+<h2>{12 if PEOR_HTML else 11}. Qué mirar y cuándo decidir</h2>{senales}
 
 <h2>Supuestos y límites</h2>
 <p class="note">AO29: cupón 6 % pagado 0,5 % por mes, vence oct-29; comprado a {c1(a.compra_ao29)} (dato de Ivo). Largos: bonos sintéticos calibrados a precio y duration de BondTerminal, cupón semestral. TIR = UST + spread proporcional al riesgo país. Reestructuración: desde la elección, cada bono vale el {100-int(P["quita"])} % del precio del bono nuevo (cupón {c1(P["cupon_nuevo"])} %, 2035) a TIR UST + riesgo país. Notas (70 mil) con cupones y capital al par, sin barreras. Con Nada, los aportes del calendario quedan afuera (referencia: T-bills al {c1(a.tbill)} %). Sin margin call; las inyecciones de cobertura se informan, no se simulan. Umbrales de probabilidad con Milei y oposición con el mismo peso. Modelo de escenarios, no predicción; no es asesoramiento financiero.</p>
@@ -357,6 +369,6 @@ document.querySelectorAll('figure.tl').forEach(function(f){{
     tip.innerHTML='<b>'+M[i]+(i===0?' (hoy)':'')+'</b><br>'+d.s.map(function(s){{return '<span style="color:'+s.c+'">●</span> '+s.l+': '+f2(s.v[i]);}}).join('<br>');tip.style.display='';tip.style.left=Math.min(r.width-200,Math.max(4,px*sc+8))+'px';}});
   hit.addEventListener('mouseleave',function(){{cr.style.display='none';tip.style.display='none';}});
 }});
-</script></body></html>'''
+</script>{PEOR_JS}</body></html>'''
 open(a.out, "w").write(page)
 print("ok", len(page))
