@@ -24,7 +24,9 @@ MESN = ["oct-26", "nov-26", "dic-26", "ene-27", "feb-27", "mar-27", "abr-27", "m
 W, H, ML, MR, MT, MB = 372, 230, 46, 62, 12, 28
 
 def kes(v): return (f"{v/1000:,.0f}k").replace(",", ".")
-def x2(v): return "n/d" if v is None else f"{v:.2f}x".replace(".", ",")
+def x2(v): return "neto < 0" if v is None else f"{v:.2f}x".replace(".", ",")
+import math
+def levmax(rr): return None if any(r["lev"] is None for r in rr) else max(r["lev"] for r in rr)
 def pct(v): return f"{v:.1f} %".replace(".", ",")
 
 def panel(pid, titulo, series, metric, ymin, ymax, labels=True):
@@ -34,7 +36,8 @@ def panel(pid, titulo, series, metric, ymin, ymax, labels=True):
     g = ""; raw = (ymax - ymin) / 4
     mag = 10 ** (len(str(int(raw))) - 1) if raw >= 1 else 10 ** (-1 if raw >= 0.1 else -2)
     step = next(s * mag for s in (1, 2, 2.5, 5, 10) if s * mag >= raw)
-    v = (int(ymin / step) + (0 if ymin % step == 0 else 1)) * step
+    if metric == "usd" and ymin < 0: step = min(step, 250000)
+    v = math.ceil(ymin / step - 1e-9) * step
     while v <= ymax + 1e-9:
         lab = f"{v:.1f}x".replace(".", ",") if metric == "lev" else f"{v:,.0f}".replace(",", ".") if metric == "rp" else kes(v)
         g += f'<line x1="{ML}" x2="{W-MR}" y1="{Y(v):.1f}" y2="{Y(v):.1f}" class="grid"/><text x="{ML-6}" y="{Y(v)+3:.1f}" class="ax" text-anchor="end">{lab}</text>'
@@ -89,14 +92,14 @@ alts = ('<table><tr><th>Alternativa</th><th>Capital nuevo</th><th>Flujos de la c
         f'<tr><td>AO29 si RP&gt;700</td><td>Se canjea y compra AO29 a precio de mercado si el riesgo país está arriba de {int(P["umbral_ao29"])} pb; si no, va al fondo USD.</td></tr></table>')
 
 def resumen(RR, titulo):
-    t = f'<h3>{titulo}</h3><table><tr><th>Escenario</th><th>Alternativa</th><th>Capital aportado</th><th>Caución dic-27</th><th>Apal. dic-27</th><th>Apal. máximo</th><th>Neto oct-29</th><th>Neto oct-29 menos capital aportado</th><th>vs Nada</th></tr>'
+    t = f'<h3>{titulo}</h3><table><tr><th>Escenario</th><th>Alternativa</th><th>Capital aportado</th><th>Caución dic-27</th><th>Apal. dic-27</th><th>Apal. máximo</th><th>Neto mínimo</th><th>Neto oct-29</th><th>Neto oct-29 menos capital aportado</th><th>vs Nada</th></tr>'
     for sc in SC:
         base_ = RR[sc]["estrategias"]["N"][36]["neto_menos_aportes"]
         for i, e in enumerate(EST):
             rr = RR[sc]["estrategias"][e]; f = rr[36]
             dif = f["neto_menos_aportes"] - base_
             t += (f'<tr>{f"<td rowspan=4>{sc} · {html.escape(RR[sc]["nombre"])}</td>" if i == 0 else ""}<td style="text-align:left">{NOM[e]}</td><td class="n">{kes(f["aportes"])}</td>'
-                  f'<td class="n">{kes(rr[14]["caucion"])}</td><td class="n">{x2(rr[14]["lev"])}</td><td class="n">{x2(max((r["lev"] or 99) for r in rr[1:36]))}</td>'
+                  f'<td class="n">{kes(rr[14]["caucion"])}</td><td class="n">{x2(rr[14]["lev"])}</td><td class="n">{x2(levmax(rr[1:36]))}</td><td class="n">{kes(min(r["neto"] for r in rr[1:]))}</td>'
                   f'<td class="n">{kes(f["neto"])}</td><td class="n"><b>{kes(f["neto_menos_aportes"])}</b></td><td class="n">{"–" if e == "N" else ("+" if dif >= 0 else "") + kes(dif)}</td></tr>')
     return t + '</table>'
 
@@ -113,46 +116,47 @@ def flujos():
 
 def valuacion():
     hit = [(5, "mar-27"), (11, "sep-27"), (12, "oct-27"), (14, "dic-27"), (24, "oct-28"), (36, "oct-29")]
-    t = '<table><tr><th>Escenario</th><th>Alternativa</th>' + "".join(f'<th colspan="3">{l}</th>' for _, l in hit) + '</tr><tr><th></th><th></th>' + '<th>Bonos AR</th><th>Fondo</th><th>Caución</th>' * len(hit) + '</tr>'
+    t = '<table><tr><th>Escenario</th><th>Alternativa</th>' + "".join(f'<th colspan="4">{l}</th>' for _, l in hit) + '</tr><tr><th></th><th></th>' + '<th>Bonos AR</th><th>Fondo</th><th>Caución</th><th>Neto</th>' * len(hit) + '</tr>'
     for sc in SC:
         for i, e in enumerate(EST):
             rr = R[sc]["estrategias"][e]
-            t += (f'<tr>{f"<td rowspan=4>{sc}</td>" if i == 0 else ""}<td style="text-align:left">{NOM[e]}</td>' + "".join(f'<td class="n">{kes(rr[m]["ar"])}</td><td class="n">{kes(rr[m]["fondo"])}</td><td class="n">{kes(rr[m]["caucion"])}</td>' for m, _ in hit) + '</tr>')
+            t += (f'<tr>{f"<td rowspan=4>{sc}</td>" if i == 0 else ""}<td style="text-align:left">{NOM[e]}</td>' + "".join(f'<td class="n">{kes(rr[m]["ar"])}</td><td class="n">{kes(rr[m]["fondo"])}</td><td class="n">{kes(rr[m]["caucion"])}</td><td class="n"><b>{kes(rr[m]["neto"])}</b></td>' for m, _ in hit) + '</tr>')
     return t + '</table>'
 
 def previas():
-    t = '<table><tr><th rowspan="2">Alternativa</th>' + "".join(f'<th colspan="3">{PREV[k]}</th>' for k in KEYS) + '</tr><tr>' + '<th>Activos</th><th>Neto</th><th>Apal.</th>' * len(KEYS) + '</tr>'
+    t = '<table><tr><th rowspan="2">Alternativa</th>' + "".join(f'<th colspan="2">{PREV[k]}</th>' for k in KEYS) + '</tr><tr>' + '<th>Neto</th><th>Apal.</th>' * len(KEYS) + '</tr>'
     for e in EST:
-        t += f'<tr><td style="text-align:left">{NOM[e]}</td>' + "".join(f'<td class="n">{kes(VARS[k]["resultados"]["S1"]["estrategias"][e][11]["bruto"])}</td><td class="n">{kes(VARS[k]["resultados"]["S1"]["estrategias"][e][11]["neto"])}</td><td class="n">{x2(VARS[k]["resultados"]["S1"]["estrategias"][e][11]["lev"])}</td>' for k in KEYS) + '</tr>'
+        t += f'<tr><td style="text-align:left">{NOM[e]}</td>' + "".join(f'<td class="n">{kes(VARS[k]["resultados"]["S1"]["estrategias"][e][11]["neto"])}</td><td class="n">{x2(VARS[k]["resultados"]["S1"]["estrategias"][e][11]["lev"])}</td>' for k in KEYS) + '</tr>'
     t += '</table><table><tr><th rowspan="2">Escenario</th><th rowspan="2">Alternativa</th>' + "".join(f'<th colspan="2">{PREV[k]}</th>' for k in KEYS) + '</tr><tr>' + '<th>Apal. máx.</th><th>Neto mínimo</th>' * len(KEYS) + '</tr>'
     for sc in SC:
         for i, e in enumerate(EST):
             t += f'<tr>{f"<td rowspan=4>{sc}</td>" if i == 0 else ""}<td style="text-align:left">{NOM[e]}</td>'
             for k in KEYS:
                 rr = VARS[k]["resultados"][sc]["estrategias"][e][1:36]
-                t += f'<td class="n">{x2(max((r["lev"] or 99) for r in rr))}</td><td class="n">{kes(min(r["neto"] for r in rr))}</td>'
+                t += f'<td class="n">{x2(levmax(rr))}</td><td class="n">{kes(min(r["neto"] for r in rr))}</td>'
             t += '</tr>'
     return t + '</table>'
 
 def estres():
     if not ESTR: return ""
     k = next(iter(ESTR)); RR = ESTR[k]["resultados"]
-    t = f'<h3>Estrés de la reestructuración: recupero del 40 % del nominal</h3><p class="desc">Mismo escenario 3, pero los bonos valen 40 por cada 100 de nominal desde dic-27 (en el caso base valen lo que implica un riesgo país de 2.000 pb). {PREV[k]}.</p><table><tr><th>Alternativa</th><th>Apal. máximo</th><th>Neto mínimo</th><th>Neto oct-29</th><th>Neto menos capital aportado</th><th>vs Nada</th></tr>'
+    t = f'<h3>Estrés de la reestructuración: canje sin recuperación</h3><p class="desc">Mismo canje (quita 25 %, cupón 5 %, 2035), pero el riesgo país se queda en 2.000 pb hasta oct-29 en lugar de bajar a 1.200. {PREV[k]}.</p><table><tr><th>Alternativa</th><th>Apal. máximo</th><th>Neto mínimo</th><th>Neto oct-29</th><th>Neto menos capital aportado</th><th>vs Nada</th></tr>'
     b_ = RR["S3"]["estrategias"]["N"][36]["neto_menos_aportes"]
     for e in EST:
         rr = RR["S3"]["estrategias"][e]; d = rr[36]["neto_menos_aportes"] - b_
-        t += f'<tr><td style="text-align:left">{NOM[e]}</td><td class="n">{x2(max((r["lev"] or 99) for r in rr[1:36]))}</td><td class="n">{kes(min(r["neto"] for r in rr[1:36]))}</td><td class="n">{kes(rr[36]["neto"])}</td><td class="n"><b>{kes(rr[36]["neto_menos_aportes"])}</b></td><td class="n">{"–" if e == "N" else ("+" if d >= 0 else "") + kes(d)}</td></tr>'
+        t += f'<tr><td style="text-align:left">{NOM[e]}</td><td class="n">{x2(levmax(rr[1:36]))}</td><td class="n">{kes(min(r["neto"] for r in rr[1:36]))}</td><td class="n">{kes(rr[36]["neto"])}</td><td class="n"><b>{kes(rr[36]["neto_menos_aportes"])}</b></td><td class="n">{"–" if e == "N" else ("+" if d >= 0 else "") + kes(d)}</td></tr>'
     return t + '</table>'
 
 def lectura():
     g = lambda sc, e, RR=R: RR[sc]["estrategias"][e][36]["neto_menos_aportes"]
-    d = lambda sc, e, f: kes(g(sc, e) - g(sc, f))
+    d = lambda sc, e, f, RR=R: (lambda v: ("+" if v >= 0 else "") + kes(v))(g(sc, e, RR) - g(sc, f, RR))
+    S3 = R["S3"]["estrategias"]; nmin = lambda e: kes(min(r["neto"] for r in S3[e][1:]))
     st = ESTR[next(iter(ESTR))]["resultados"] if ESTR else None
-    li = [f'<li><b>Contra no hacer nada, cualquier alternativa con capital mejora poco el resultado económico, pero mejora mucho el riesgo.</b> Con Nada, el apalancamiento llega a {x2(max((r["lev"] or 99) for r in R["S3"]["estrategias"]["N"][1:36]))} en la reestructuración y la caución sigue abierta en oct-29 ({kes(R["S3"]["estrategias"]["N"][36]["caucion"])}). Con capital nuevo baja a 1,8-2,1x en enero de 2027.</li>',
-          f'<li><b>Repagar caución es lo que más baja el apalancamiento</b> ({x2(R["S1"]["estrategias"]["R"][3]["lev"])} en ene-27 contra {x2(R["S1"]["estrategias"]["F"][3]["lev"])} con el fondo) y lo que da más capacidad de compra. Pero rinde menos que el fondo: la caución cuesta {str(P["caucion_tasa"]).replace(".", ",")} % y el fondo paga {str(P["fondo"]).replace(".", ",")} %, así que el fondo termina {d("S1", "F", "R")} arriba en oct-29. Con el fondo, el apalancamiento contable es mayor, pero ese efectivo se puede usar para repagar caución en cualquier momento: es una caución cubierta.</li>',
-          f'<li><b>AO29 es la que más gana si se paga la deuda</b>: {d("S1", "A", "F")} más que el fondo si gana Milei y {d("S2", "A", "F")} si gana la oposición y paga. <b>Es la que más pierde si hay reestructuración</b>: {d("S3", "A", "F")} contra el fondo en el caso base' + (f' y {kes(st["S3"]["estrategias"]["A"][36]["neto_menos_aportes"] - st["S3"]["estrategias"]["F"][36]["neto_menos_aportes"])} con recupero del 40 %' if st else '') + '. Concentra más en el mismo bono que ya es el 70 % de la cartera.</li>',
-          f'<li><b>La condición de comprar AO29 solo arriba de 700 pb no se activa</b> en ninguno de los caminos modelados: el capital entra entre noviembre y marzo, y en las tres previas el riesgo país está arriba de 800 en ese período. Solo cambiaría algo si el riesgo país cae por debajo de 700 antes de marzo.</li>',
-          (lambda L: f'<li><b>La previa casi no cambia el resultado final</b>, porque en la elección los bonos se revalúan al nivel del escenario. Sí cambia el camino: en septiembre de 2027, Nada está en {x2(L("800","N"))} con la previa que baja a 800 y en {x2(L("1200","N"))} con la que sube a 1.200; Repagar caución, en {x2(L("800","R"))} y {x2(L("1200","R"))}. El apalancamiento más alto de todo el período es el de noviembre de 2026, en todas las previas.</li>')(lambda k, e: VARS[k]["resultados"]["S1"]["estrategias"][e][11]["lev"]) if "1200" in VARS and "800" in VARS else ""]
+    li = [f'<li><b>La reestructuración es el escenario que decide.</b> Con el canje, desde la elección los bonos pasan a valer unos 25 centavos (AO29 de 82 a 25): el neto de Cocos cae a {nmin("N")} con Nada y a {nmin("A")} con AO29, es decir, <b>la cuenta no cubre la caución y en la realidad habría margin call</b> y venta forzada en el piso. Con Repagar caución el neto mínimo es {nmin("R")} y con el fondo {nmin("F")}: sobreviven, pero con apalancamiento muy alto en oct-27.</li>',
+          f'<li><b>Si se paga la deuda, AO29 es la que más gana</b>: {d("S1", "A", "F")} contra el fondo con Milei y {d("S2", "A", "F")} con la oposición. <b>En la reestructuración es la que más pierde</b>: {d("S3", "A", "F")} contra el fondo' + (f' ({d("S3", "A", "F", st)} si el riesgo país no baja de 2.000)' if st else '') + '. Concentra más en el bono que ya es el 70 % de la cartera.</li>',
+          f'<li><b>El fondo USD le gana a Repagar caución en resultado</b> ({d("S1", "F", "R")} con Milei, {d("S3", "F", "R")} en la reestructuración) porque rinde {str(P["fondo"]).replace(".", ",")} % contra el {str(P["caucion_tasa"]).replace(".", ",")} % de la caución; el canje lo capturan las dos. <b>Repagar caución es la más segura</b>: menor apalancamiento en todo el camino ({x2(R["S1"]["estrategias"]["R"][3]["lev"])} en ene-27 contra {x2(R["S1"]["estrategias"]["F"][3]["lev"])}) y la única que termina la reestructuración con la caución por debajo de 150 mil. El fondo es una caución cubierta: ese efectivo puede repagar en cualquier momento, por ejemplo antes de la elección.</li>',
+          f'<li><b>La condición de comprar AO29 solo arriba de 700 pb no se activa</b> en ninguna previa: el capital entra entre noviembre y marzo, y en ese período el riesgo país está siempre arriba de 800.</li>',
+          (lambda L: f'<li><b>La previa casi no cambia el resultado final</b>, porque en la elección los bonos se revalúan al nivel del escenario. Sí cambia el camino: en septiembre de 2027, Nada está en {x2(L("800","N"))} con la previa que baja a 800 y en {x2(L("1200","N"))} con la que sube a 1.200; Repagar caución, en {x2(L("800","R"))} y {x2(L("1200","R"))}.</li>')(lambda k, e: VARS[k]["resultados"]["S1"]["estrategias"][e][11]["lev"]) if "1200" in VARS and "800" in VARS else ""]
     return '<h3>Lectura</h3><ul>' + "".join(li) + '</ul>'
 
 rv = [v for k in KEYS for sc in SC for v in VARS[k]["resultados"][sc]["rp_path"]]
@@ -160,12 +164,12 @@ rp_h = '<h3>Riesgo país supuesto (pb)</h3><p class="desc">Desde 938 pb (BondTer
 for sc in SC: rp_h += panel(f"rp-{sc}", f'{sc} · {R[sc]["nombre"]}', [(k, PREV[k], "var(--text)", PDASH[k], VARS[k]["resultados"][sc]["rp_path"]) for k in KEYS], "rp", 0, 2200, labels=False)
 rp_h += "</div>"
 
-lv0, lv1 = rango("lev"); nm0, nm1 = rango("neto_menos_aportes"); c0, c1 = rango("caucion"); b0, b1 = rango("bruto")
+lv0, lv1 = rango("lev"); nm0, nm1 = rango("neto_menos_aportes"); n0, n1 = rango("neto")
 body = (rp_h + leg
-        + bloque("Apalancamiento de Cocos (activos / neto)", "1,0x = sin caución. El salto de octubre de 2027 es la elección: los bonos se revalúan al nivel de riesgo país del escenario.", "lev", "lev", 1.0, round(lv1 + 0.2, 1))
+        + bloque("Apalancamiento de Cocos (activos / neto)", "1,0x = sin caución. El salto de octubre de 2027 es la elección: los bonos se revalúan al nivel de riesgo país del escenario. Eje recortado en 5x; la línea se corta cuando el neto es negativo.", "lev", "lev", 1.0, min(round(lv1 + 0.2, 1), 5.0))
         + bloque("Caución (USD)", "Lo que queda por devolver. Baja con el capital nuevo (solo en Repagar), los cupones, los vencimientos y la venta escalonada de largos.", "caucion", "usd", 0, 500000)
-        + bloque("Activos de Cocos valuados (USD)", "Bonos AR a precio de mercado + notas + fondo. Puede bajar aunque el patrimonio suba: cada cupón, vencimiento de nota o venta de largos sale de los activos para repagar caución (en Milei reelecto, la venta de los largos en oct-27 saca unos 205 mil de una vez). Para ver si se gana, mirar el neto.", "bruto", "usd", int(b0 / 100000) * 100000, round(b1 / 100000 + 1) * 100000)
-        + bloque("Neto de Cocos menos capital aportado (USD)", "La medida justa para comparar: descuenta los 130 mil que entran en las tres alternativas con capital. La distancia a Nada es lo que ganó (o perdió) ese capital.", "neto_menos_aportes", "usd", int(nm0 / 100000) * 100000, round(nm1 / 100000 + 1) * 100000))
+        + bloque("Patrimonio neto de Cocos (activos a precio de mercado − caución, USD)", "Lo que te queda si vendés todo y devolvés la caución. Incluye el capital aportado. Por debajo de cero, la cuenta no cubre la caución: en la realidad habría margin call (el modelo no lo simula).", "neto", "usd", math.floor(n0 / 100000) * 100000, round(n1 / 100000 + 1) * 100000)
+        + bloque("Neto de Cocos menos capital aportado (USD)", "La medida justa para comparar: descuenta los 130 mil que entran en las tres alternativas con capital. La distancia a Nada es lo que ganó (o perdió) ese capital.", "neto_menos_aportes", "usd", math.floor(nm0 / 100000) * 100000, round(nm1 / 100000 + 1) * 100000))
 
 page = f'''<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proyección de Cocos</title>
 <style>
@@ -186,7 +190,7 @@ details{{margin-top:14px}}.foot{{color:var(--muted);font-size:12px;margin-top:18
 <p class="desc">Solo la cuenta de Cocos. 3 escenarios electorales × 3 previas de riesgo país × 4 alternativas para el capital nuevo. Gráficos con la previa “{PREV[a.base].split(": ")[1]}”; las otras previas están en las tablas de abajo.</p>
 <h3>Dónde arrancás</h3><p class="desc">Posiciones del estado de Cocos del 31/10 a precios de BondTerminal del 6/11/2026 (MEP), riesgo país 938 pb.</p>{hoy}
 <h3>Premisas</h3><p class="desc">Capital nuevo (fin de mes), igual en las tres alternativas con capital:</p>{aportes}{alts}
-<p class="desc">Escenarios desde la elección (oct-2027): <b>S1 Milei reelecto</b>, riesgo país a {int(P["s1"])} pb. <b>S2 Oposición con shock</b>, {int(P["s2_peak"])} pb por {P["s2_hold"]} meses y baja a {int(P["s2_end"])} pb en oct-2029 (paga). <b>S3 Reestructuración</b>, 2.000 pb, cupones suspendidos desde dic-2027 y bonos al precio implícito. En todas las alternativas rige la venta escalonada de largos (600 pb vende 25 %, 500 pb llega a 50 %, 400 pb a 100 %) y lo producido repaga caución: solo se activa en S1.</p>
+<p class="desc">Escenarios desde la elección (oct-2027): <b>S1 Milei reelecto</b>, riesgo país a {int(P["s1"])} pb. <b>S2 Oposición con shock</b>, {int(P["s2_peak"])} pb por {P["s2_hold"]} meses y baja a {int(P["s2_end"])} pb en oct-2029 (paga). <b>S3 Reestructuración (canje)</b>: 2.000 pb en la elección, default en dic-2027 (sin cupones), canje en jun-2028 de todos los soberanos por un bono nuevo con quita del {int(P["quita"])} % del nominal, cupón {str(P["cupon_nuevo"]).replace(".", ",")} % semestral y vencimiento 2035; el riesgo país baja de 2.000 (jun-28) a {int(P["s3_end"])} pb (oct-29). Desde la elección, cada bono vale el {100-int(P["quita"])} % del precio del bono nuevo a TIR UST + riesgo país (referencia: en el default de 2020, los bonos cotizaron en la zona de 20 a 35 centavos). En todas las alternativas rige la venta escalonada de largos (600 pb vende 25 %, 500 pb llega a 50 %, 400 pb a 100 %) y lo producido repaga caución: solo se activa en S1.</p>
 {resumen(R, "Resultado por escenario y alternativa")}
 {lectura()}
 {body}
